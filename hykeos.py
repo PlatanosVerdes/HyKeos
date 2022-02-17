@@ -19,7 +19,8 @@ bot = commands.Bot(command_prefix=PREFIX,description="This is a helper bot")
 async def ping(ctx):
     await ctx.send('pong')
 
-async def awl(ctx):
+@bot.command()
+async def on_message(message):
     isExit = randint(0,1)
     if isExit:
         #Client.kick(member)
