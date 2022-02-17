@@ -1,0 +1,6 @@
+#Dependencies
+##Entorno virtual
+pip3 install pipenv 
+
+#Libreria 
+py -3 -m pip install -U discord.py
