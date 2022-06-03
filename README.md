@@ -1,12 +1,13 @@
 # Dependencies
 ## Entorno virtual
-python -m venv .venv
+`python -m venv .venv`
 
 # Libreria 
 `pip install py-cord`
+
 `pip install py-cord==2.0rc1`
 
-## Documentacion
+## PyCord Documentacion
 https://docs.pycord.dev/en/master/index.html
 
 # Funcionalidades
