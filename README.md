@@ -10,8 +10,8 @@ pip install py-cord==2.0rc1
 https://docs.pycord.dev/en/master/index.html
 
 #Funcionalidades
-|   Estado  |                        Funcionalidad                        | Fecha      |
-|:---------:|:-----------------------------------------------------------:|------------|
+|   Estado  |                        Funcionalidad                        |    Fecha   |
+|:---------:|:-----------------------------------------------------------:|:----------:|
 |     ✅     |             Ruleta rusa de expulsión del server             | 03/06/2022 |
 | Pendiente |                 Pedir roles a un/unos admins                |      -     |
 |     -     |                          Votaciones                         |      -     |
