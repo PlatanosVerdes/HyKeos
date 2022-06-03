@@ -1,15 +1,15 @@
-#Dependencies
-##Entorno virtual
+# Dependencies
+## Entorno virtual
 python -m venv .venv
 
-#Libreria 
+# Libreria 
 pip install py-cord
 pip install py-cord==2.0rc1
 
-##Documentacion
+## Documentacion
 https://docs.pycord.dev/en/master/index.html
 
-#Funcionalidades
+# Funcionalidades
 |   Estado  |                        Funcionalidad                        |    Fecha   |
 |:---------:|:-----------------------------------------------------------:|:----------:|
 |     ✅     |             Ruleta rusa de expulsión del server             | 03/06/2022 |
