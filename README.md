@@ -10,10 +10,12 @@ pip install py-cord==2.0rc1
 https://docs.pycord.dev/en/master/index.html
 
 #Funcionalidades
-1. Ruleta rusa de expulsión del server
-2. Pedir roles a un/unos admins
-3. Votaciones
-4. Añadir una lista de miembros o un registro (like cineastas)
-5. Reformatorio/carcel
-6. Musica
-7. Creación canales temporales (like focus)
+|   Estado  |                        Funcionalidad                        | Fecha      |
+|:---------:|:-----------------------------------------------------------:|------------|
+|     ✅     |             Ruleta rusa de expulsión del server             | 03/06/2022 |
+| Pendiente |                 Pedir roles a un/unos admins                |      -     |
+|     -     |                          Votaciones                         |      -     |
+|     -     | Añadir una lista de miembros o un registro (like cineastas) |      -     |
+|     -     |                     Reformatorio/carcel                     |      -     |
+|     -     |                            Musica                           |      -     |
+|     -     |           Creación canales temporales (like focus)          |      -     |
