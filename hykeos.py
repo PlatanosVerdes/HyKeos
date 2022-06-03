@@ -24,17 +24,6 @@ async def rnd(ctx):
         await ctx.guild.kick(ctx.author) 
     else:
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte')
-
-@bot.slash_command(description='Para ver todos los roles')
-async def rols(ctx):
-        await ctx.respond(f'Pendiente...')
-
-@bot.slash_command(description='Pide un rol al admin.')
-async def pls_rol(ctx):
-        ID_CHANNEL = 982345257142325269
-        chan = bot.get_channel(ID_CHANNEL)
-        #await ctx.respond(f'{rol}!')
-        await chan.send(f'Hi')
         
 
 #EVENTS
