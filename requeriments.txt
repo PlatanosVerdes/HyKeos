@@ -1,3 +1,0 @@
-py-cord == 2.0.0rc1
-pycord.py
-discord.py
