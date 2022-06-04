@@ -1,0 +1,2 @@
+python == 3.10
+py-cord == 2.0.0rc1
