@@ -1,1 +1,1 @@
-worker: python3 hykeos.py
+worker: python hykeos.py
