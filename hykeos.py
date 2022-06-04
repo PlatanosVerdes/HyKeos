@@ -20,7 +20,7 @@ async def hello(ctx):
 @bot.slash_command(description='Prueba suerte para ser tu propio jefe.')
 async def rnd(ctx):
     if randint(0,1):
-        await ctx.respond(f'{ctx.author.mention} Has muerto')
+        await ctx.respond(f'{ctx.author.mention} Ha muerto')
         await ctx.guild.kick(ctx.author) 
     else:
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte')
