@@ -1,5 +1,5 @@
 import discord
-from discord import option
+from discord import option, Colour
 from discord.commands import Option
 import random
 from random import randint
@@ -11,8 +11,6 @@ ID_ADMIN = 588492819606405133
 bot = discord.Bot(debug_guilds=[ID_GUIRIS])
 
 # METHODS
-
-
 @bot.slash_command(description='pong 🏓')
 async def ping(ctx):
     await ctx.respond('Pong 🏓')
@@ -35,17 +33,17 @@ async def rnd(ctx):
 @bot.slash_command(description='Para ver todos los roles 👀')
 async def roles(ctx):
     roles = ctx.guild.roles
-    embed = discord.Embed(color=discord.Colour.purple(), title='Roles',
+    embed = discord.Embed(color=Colour.purple(), title='Roles',
                           description='\n'.join(f'`{role.name}`' for role in roles))
     await ctx.respond(embed=embed)
 
 
 @bot.slash_command(description='Pide un rol al admin 🙋🏻‍♂️')
-@option("Rol", description="Rol que solicitas")
-@option("Description", description="Escribe una breve descripción argumentando tu petición")
+@option("rol", description="Rol que solicitas")
+@option("motivo", description="Escribe una breve descripción argumentando tu petición")
 async def pls_rol(ctx, rol: str, descripcion: str):
     roles = ctx.guild.roles
-    if [role.name for role in roles]:
+    if any(rol.lower() == role.name.lower() for role in roles):
         ID_CHANNEL = 982345257142325269
         embed = discord.Embed(color=discord.Colour.purple(), title='Petición de Rol de:\n`{}`'.format(ctx.author),
                               description=f'Rol: `{rol}`\n Motivo: `{descripcion}`')
