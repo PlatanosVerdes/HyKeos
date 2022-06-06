@@ -15,6 +15,7 @@ https://docs.pycord.dev/en/master/index.html
 |:---------:|:-----------------------------------------------------------:|:----------:|
 |     ✅     |             Ruleta rusa de expulsión del server             | 03/06/2022 |
 | Pendiente |                 Pedir roles a un/unos admins                |      -     |
+|     -     |                          Chat de texto temporal, que se borre cada x tiempo                         |      -     |
 |     -     |                          Votaciones                         |      -     |
 |     -     | Añadir una lista de miembros o un registro (like cineastas) |      -     |
 |     -     |                     Reformatorio/carcel                     |      -     |
