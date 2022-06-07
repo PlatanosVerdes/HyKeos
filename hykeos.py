@@ -21,7 +21,7 @@ async def hello(ctx):
     await ctx.respond(f'Hi {ctx.author.mention}, I\'m {bot.user.name}!')
 
 
-@bot.slash_command(description='Prueba suerte para ser tu propio jefe.')
+@bot.slash_command(description='Te justa jugar? 🎲 Este es tu juego! Prueba suerte! 🎰')
 async def rnd(ctx):
     if randint(0, 1):
         await ctx.respond(f'{ctx.author.mention} Ha muerto 💀')
