@@ -59,8 +59,7 @@ async def pls_rol(ctx, rol: str, descripcion: str):
 async def vote(ctx, propuesta: str):
     embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta By: {}\n'.format(ctx.author),
                               description=f'{propuesta}\n\n📩')
-    id_channel = ctx.channel.id
-    request = await ctx.guild.get_channel(id_channel).send(embed=embed)
+    request = await ctx.guild.get_channel(ctx.channel.id).send(embed=embed)
     await request.add_reaction('✅')
     await request.add_reaction('❌')
 
