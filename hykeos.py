@@ -54,14 +54,16 @@ async def pls_rol(ctx, rol: str, descripcion: str):
         await ctx.respond(f'No se ha encontradom el rol `{rol}`...😔', ephemeral=True)
 
 
-@bot.slash_command(description='Abre una votación 📩')
+@bot.slash_command(description='Abre una votación 📩 con reacciones personalizadas 🎨')
 @option("propuesta", description="Tema de votación")
-async def vote(ctx, propuesta: str):
-    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta By: {}\n'.format(ctx.author),
-                              description=f'{propuesta}\n\n📩')
+@option("reaccion 1", description="Pon la primer reacción")
+@option("reaccion 2", description="Pon la segunda reacción")
+async def vote_reacts(ctx, propuesta: str, react1: str, react2: str):
+    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta\n',
+                              description=f'{propuesta}\n\n📩 By: {ctx.author}')
     request = await ctx.guild.get_channel(ctx.channel.id).send(embed=embed)
-    await request.add_reaction('✅')
-    await request.add_reaction('❌')
+    await request.add_reaction(react1)
+    await request.add_reaction(react2)
 
     await ctx.respond(f'Votación realizada! 🎉', ephemeral=True)
 
