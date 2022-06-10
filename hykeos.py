@@ -15,7 +15,6 @@ bot = discord.Bot(debug_guilds=[ID_GUIRIS])
 async def ping(ctx):
     await ctx.respond('Pong 🏓')
 
-
 @bot.slash_command(description='El bot te saluda.')
 async def hello(ctx):
     await ctx.respond(f'Hi {ctx.author.mention}, I\'m {bot.user.name}!')
@@ -56,13 +55,14 @@ async def pls_rol(ctx, rol: str, descripcion: str):
 
 
 @bot.slash_command(description='Abre una votación 📩')
-@option("mensaje", description="Tema de votación")
+@option("propuesta", description="Tema de votación")
 async def vote(ctx, mensaje: str):
-    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta by `{}`:\n'.format(ctx.author),
-                              description=f'`{mensaje}`\n')
-    respond = await ctx.respond(embed=embed)
-    await respond.add_reaction('✅')
-    await respond.add_reaction('❌')
+    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta By: {}\n'.format(ctx.author),
+                              description=f'{mensaje}\n\n📩')
+    id_channel = ctx.channel.id
+    request = await ctx.guild.get_channel(id_channel).send(embed=embed)
+    await request.add_reaction('✅')
+    await request.add_reaction('❌')
 
 # EVENTS
 @bot.event
