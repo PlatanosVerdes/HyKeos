@@ -56,9 +56,9 @@ async def pls_rol(ctx, rol: str, descripcion: str):
 
 @bot.slash_command(description='Abre una votación 📩')
 @option("propuesta", description="Tema de votación")
-async def vote(ctx, mensaje: str):
+async def vote(ctx, propuesta: str):
     embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta By: {}\n'.format(ctx.author),
-                              description=f'{mensaje}\n\n📩')
+                              description=f'{propuesta}\n\n📩')
     id_channel = ctx.channel.id
     request = await ctx.guild.get_channel(id_channel).send(embed=embed)
     await request.add_reaction('✅')
