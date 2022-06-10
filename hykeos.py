@@ -55,6 +55,15 @@ async def pls_rol(ctx, rol: str, descripcion: str):
         await ctx.respond(f'No se ha encontradom el rol `{rol}`...😔', ephemeral=True)
 
 
+@bot.slash_command(description='Abre una votación 📩')
+@option("mensaje", description="Tema de votación")
+async def pls_rol(ctx, mensaje: str):
+    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta by `{}`:\n'.format(ctx.author),
+                              description=f'`{mensaje}`\n')
+    respond = await ctx.respond(embed=embed)
+    await respond.add_reaction('✅')
+    await respond.add_reaction('❌')
+
 # EVENTS
 @bot.event
 async def on_ready():
