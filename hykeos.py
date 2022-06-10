@@ -57,7 +57,7 @@ async def pls_rol(ctx, rol: str, descripcion: str):
 
 @bot.slash_command(description='Abre una votación 📩')
 @option("mensaje", description="Tema de votación")
-async def pls_rol(ctx, mensaje: str):
+async def vote(ctx, mensaje: str):
     embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta by `{}`:\n'.format(ctx.author),
                               description=f'`{mensaje}`\n')
     respond = await ctx.respond(embed=embed)
