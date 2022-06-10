@@ -57,7 +57,7 @@ async def pls_rol(ctx, rol: str, descripcion: str):
 @bot.slash_command(description='Abre una votación 📩 con ✅ y ❌')
 @option("propuesta", description="Tema de votación")
 async def vote(ctx, propuesta: str):
-    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta\n',
+    embed = discord.Embed(color=discord.Colour.purple(), title='Votación Abierta\n',
                               description=f'{propuesta}\n\n📩 By: {ctx.author}')
     request = await ctx.guild.get_channel(ctx.channel.id).send(embed=embed)
     await request.add_reaction('✅')
@@ -70,7 +70,7 @@ async def vote(ctx, propuesta: str):
 @option("reaccion 1", description="Pon la primer reacción")
 @option("reaccion 2", description="Pon la segunda reacción")
 async def vote_reacts(ctx, propuesta: str, react1: str, react2: str):
-    embed = discord.Embed(color=discord.Colour.purple(), title='Votación abierta\n',
+    embed = discord.Embed(color=discord.Colour.purple(), title='Votación Abierta\n',
                               description=f'{propuesta}\n\n📩 By: {ctx.author}')
     request = await ctx.guild.get_channel(ctx.channel.id).send(embed=embed)
     await request.add_reaction(react1)
