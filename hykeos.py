@@ -63,6 +63,8 @@ async def vote(ctx, propuesta: str):
     await request.add_reaction('✅')
     await request.add_reaction('❌')
 
+    await ctx.respond(f'Votación realizada! 🎉', ephemeral=True)
+
 # EVENTS
 @bot.event
 async def on_ready():
