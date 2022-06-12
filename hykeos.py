@@ -26,6 +26,7 @@ async def rnd(ctx):
         await ctx.respond(f'{ctx.author.mention} Ha muerto 💀')
         await ctx.guild.kick(ctx.author)
     else:
+        await ctx.author.add_roles(discord.utils.get(ctx.guild.roles, name='Vencio a la muerte'), atomic=True)
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
 
 @bot.slash_command(description='Te gusta jugar pero le temes a la muerte porque tienes 💩? Prueba suerte con este juego! 🎰')
