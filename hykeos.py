@@ -28,6 +28,14 @@ async def rnd(ctx):
     else:
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
 
+@bot.slash_command(description='Te gusta jugar pero le temes a la muerte porque tienes 💩? Prueba suerte con este juego! 🎰')
+async def rnd_eassy(ctx):
+    if randint(0, 1):
+        await ctx.author.move_to(None)
+        await ctx.respond(f'{ctx.author.mention} A la calle 🚴')
+    else:
+        await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
+
 
 @bot.slash_command(description='Para ver todos los roles 👀')
 async def roles(ctx):
@@ -35,6 +43,22 @@ async def roles(ctx):
     embed = discord.Embed(color=Colour.purple(), title='Roles',
                           description='\n'.join(f'`{role.name}`' for role in roles))
     await ctx.respond(embed=embed)
+
+@bot.slash_command(description='Al reformatorio! ⛓. Debe de existir el canal con el nombre: ⛓ Reformatorio ⛓')
+@option("member", description="Quien se ha portado mal? 🤔")
+async def reformatory(ctx, *, member: discord.Member):
+    #Mirar si tiene el rol de reformatorio
+    if not ctx.author.guild_permissions.administrator or ctx.author.get_role(985583574021443584) == None:
+        await ctx.respond(f'{ctx.author.mention} No tienes permisos para hacer eso! 🤔')
+    else:
+        name_channel = "⛓ Reformatorio ⛓"
+        voice_channels = ctx.guild.voice_channels
+        channel = discord.utils.get(voice_channels, name=name_channel)
+        if channel == None:
+            await ctx.respond(f'No existe el canal {name_channel}',ephemeral=True)
+        else:
+            await member.move_to(channel)
+            await ctx.respond(f'{member.mention} se ha movido al canal {name_channel} porque se ha portado mal 😡')
 
 
 @bot.slash_command(description='Pide un rol al admin 🙋🏻‍♂️')
@@ -69,7 +93,7 @@ async def vote(ctx, propuesta: str):
 @option("propuesta", description="Tema de votación")
 @option("reaccion 1", description="Pon la primer reacción")
 @option("reaccion 2", description="Pon la segunda reacción")
-async def vote_reacts(ctx, propuesta: str, react1: str, react2: str):
+async def vote_custom(ctx, propuesta: str, react1: str, react2: str):
     embed = discord.Embed(color=discord.Colour.purple(), title='Votación Abierta\n',
                               description=f'{propuesta}\n\n📩 By: {ctx.author}')
     request = await ctx.guild.get_channel(ctx.channel.id).send(embed=embed)
