@@ -29,7 +29,7 @@ async def rnd(ctx):
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
 
 @bot.slash_command(description='Te gusta jugar pero le temes a la muerte porque tienes 💩? Prueba suerte con este juego! 🎰')
-async def rnd_eassy(ctx):
+async def rnd_easy(ctx):
     if randint(0, 1):
         await ctx.author.move_to(None)
         await ctx.respond(f'{ctx.author.mention} A la calle 🚴')
@@ -48,7 +48,8 @@ async def roles(ctx):
 @option("member", description="Quien se ha portado mal? 🤔")
 async def reformatory(ctx, *, member: discord.Member):
     #Mirar si tiene el rol de reformatorio
-    if not ctx.author.guild_permissions.administrator or ctx.author.get_role(985583574021443584) == None:
+    #not ctx.author.guild_permissions.administrator or 
+    if ctx.author.get_role(985583574021443584) == None:
         await ctx.respond(f'{ctx.author.mention} No tienes permisos para hacer eso! 🤔')
     else:
         name_channel = "⛓ Reformatorio ⛓"
@@ -58,7 +59,7 @@ async def reformatory(ctx, *, member: discord.Member):
             await ctx.respond(f'No existe el canal {name_channel}',ephemeral=True)
         else:
             await member.move_to(channel)
-            await ctx.respond(f'{member.mention} se ha movido al canal {name_channel} porque se ha portado mal 😡')
+            await ctx.respond(f'{member.mention} se ha movido al canal {name_channel} se ha portado mal 😡')
 
 
 @bot.slash_command(description='Pide un rol al admin 🙋🏻‍♂️')
