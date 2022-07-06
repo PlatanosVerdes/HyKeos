@@ -45,6 +45,7 @@ async def roles(ctx):
                           description='\n'.join(f'`{role.name}`' for role in roles))
     await ctx.respond(embed=embed)
 
+
 @bot.slash_command(description='Al reformatorio! ⛓. Debe de existir el canal con el nombre: ⛓ Reformatorio ⛓')
 @option("member", description="Quien se ha portado mal? 🤔")
 async def reformatory(ctx, *, member: discord.Member):
