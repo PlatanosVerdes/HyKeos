@@ -5,6 +5,15 @@ from random import randint
 from datetime import datetime
 import os
 from discord.ext import commands
+import pandas as pd
+import numpy as np
+
+# DEBUG stuff
+DEBUG = True
+
+def print_debug(message):
+    if DEBUG: print(f"[{str(datetime.now()).split(' ')[1]} - DEBUG] {message}")
+    return
 
 TOKEN = 'OTQzODI0NDg0NTEzNzUxMDYy.Yg4rDA.p60NNYyoKLvPZrXovh6yy5EIE-g'
 ID_GUIRIS = 718460119993548800
@@ -16,7 +25,6 @@ intents.members = True
 
 bot = discord.Bot(debug_guilds=[ID_GUIRIS], intents=intents)
 
-
 ROLE_CHANNEL_ID = 982345257142325269
 FOOD_CHANNEL_ID = 975135205692149801
 REFORMATORY_CHANNEL_ID = 985583574021443584
@@ -26,21 +34,12 @@ TWO_STAR_REACTION_ID = 982649186942087188
 THREE_STAR_REACTION_ID = 982649184362590358
 
 TOPS = (3, 5, 10)
+MONTHS = ("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+          "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
 
 # -------------------------------
 # CLASSES
 # -------------------------------
-
-
-class Month:
-    months = ('Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre')
-
-    def get_month(month: str):
-        for i in range(len(Month.months)):
-            if month.lower() == Month.months[i].lower():
-                return i + 1
-        return -1
 
 
 class FoodPlayer:
@@ -64,25 +63,38 @@ class FoodPlayer:
 
 class PlsRoleView(discord.ui.View):
 
-    def __init__(self, rol_name, reason):
+    def __init__(self, user, rol_name, reason, roles):
         super().__init__()
+        self.user = user
         self.rol_name = rol_name
         self.reason = reason
+        self.roles = roles
 
     @discord.ui.button(label="Aceptar", row=0, style=discord.ButtonStyle.success)
-    async def first_button_callback(self, button, interaction):
+    async def first_button_callback(self, _, interaction):
 
-        await interaction.user.add_roles([rol for rol in bot.guilds[0].roles if rol.name == self.rol_name][0], atomic=True)
-        await interaction.response.send_message("Aceptada")
+        await interaction.user.add_roles([rol for rol in self.roles if rol.name.lower() == self.rol_name.lower()][0], atomic=True)
+        await interaction.channel.send(f"{interaction.user.mention} ha aceptado a {self.mention} ({self.user}) , ahora es `{self.rol_name}` 🎉")
+        await interaction.message.delete()
+        await interaction.user.send(f"Solicitud del rol `{self.rol_name.upper()}` aprovada ✅")
 
     @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
-    async def second_button_callback(self, button, interaction):
-        await interaction.user.send(f'Se ha rechazado tu solicitud de ser {self.rol_name}')
-        await interaction.response.send_message("Rechazada")
+    async def second_button_callback(self, _, interaction):
+
+        await interaction.channel.send(f"{interaction.user.mention} ha denegado a {self.mention} ({self.user}) a ser `{self.rol_name.capitalize()}` 💀")
+        await interaction.message.delete()
+        await interaction.user.send(f'Solicitud del rol `{self.rol_name.upper()}` denegada ❌')
 
 # -------------------------------
 # METHODS
 # -------------------------------
+
+
+def get_month(month):
+    try:
+        return MONTHS.index(month.capitalize()) + 1
+    except Exception:
+        return -1
 
 
 def ranking_icon(rank):
@@ -97,11 +109,10 @@ def ranking_icon(rank):
 # -------------------------------
 # GETTERS for AutoComplete
 # -------------------------------
-async def get_roles(ctx: discord.AutocompleteContext):
-    return [rol.name for rol in bot.guilds[0].roles]
+
 
 async def get_months(ctx: discord.AutocompleteContext):
-    return [month for month in Month.months if month.startswith(ctx.value.lower())]
+    return [month for month in MONTHS if month.capitalize().startswith(ctx.value.capitalize())]
 
 
 # -------------------------------
@@ -140,42 +151,50 @@ async def rnd_easy(ctx):
 
 @bot.slash_command(description='Para ver todos los roles 👀')
 async def roles(ctx):
-    roles = ctx.guild.roles
+    roles = [rol for rol in ctx.guild.roles[1::] if not rol.is_bot_managed()]
+
+    roles = sorted(roles, key=lambda x: x.position, reverse=True)
+    counted_roles = [len(rol.members) for rol in roles]
+    df = pd.DataFrame({'Rol': roles, 'Members': counted_roles})
+
     embed = discord.Embed(color=Colour.purple(), title='Roles',
-                          description='\n'.join(f'`{role.name}`' for role in roles))
+                          description='\n'.join(f'{role.mention} - `{counted_roles[i]} 👤`' for i, role in enumerate(roles)))
+    # description=f'\n {df.to_string(index=False)}')
     await ctx.respond(embed=embed)
 
 
 @bot.slash_command(description='Al reformatorio! ⛓. Debe de existir el canal con el nombre: ⛓ Reformatorio ⛓')
 @option("member", description="Quien se ha portado mal? 🤔")
-async def reformatory(ctx, *, member: discord.Member):
+async def reformatory(ctx, _, member: discord.Member):
     # Mirar si tiene el rol de reformatorio
     # not ctx.author.guild_permissions.administrator or
     if ctx.author.get_role(REFORMATORY_CHANNEL_ID) == None:
         await ctx.respond(f'{ctx.author.mention} No tienes permisos para hacer eso! 🤔')
-    else:
-        name_channel = "⛓ Reformatorio ⛓"
-        voice_channels = ctx.guild.voice_channels
-        channel = discord.utils.get(voice_channels, name=name_channel)
-        if channel == None:
-            await ctx.respond(f'No existe el canal {name_channel}', ephemeral=True)
-        else:
-            await member.move_to(channel)
-            await ctx.respond(f'{member.mention} se ha movido al canal {name_channel} se ha portado mal 😡')
+        return
+
+    name_channel = "⛓ Reformatorio ⛓"
+    channel = discord.utils.get(ctx.guild.voice_channels, name=name_channel)
+
+    if channel == None:
+        await ctx.respond(f'No existe el canal {name_channel}', ephemeral=True)
+        return
+
+    await member.move_to(channel)
+    await ctx.respond(f'{member.mention} se ha movido al canal {name_channel} se ha portado mal 😡')
 
 
 @bot.slash_command(description='Pide un rol al admin 🙋🏻‍♂️')
-@option("rol", description="Rol que solicitas", autocomplete=get_roles)
+@option("rol", description="Rol que solicitas")
 @option("motivo", description="Escribe una breve descripción argumentando tu petición")
 async def pls_rol(ctx, rol: str, reason: str):
     roles = ctx.guild.roles
     if any(rol.lower() == role.name.lower() for role in roles):
         embed = discord.Embed(color=discord.Colour.purple(), title='Petición de Rol de:\n`{}`'.format(ctx.author),
-                              description=f'Rol: `{rol}`\n Motivo: `{reason}`')
-        await ctx.guild.get_channel(ROLE_CHANNEL_ID).send(embed=embed, view=PlsRoleView(rol, reason))
+                              description=f'Rol: `{rol.upper()}`\n Motivo: `{reason}`')
+        await ctx.guild.get_channel(ROLE_CHANNEL_ID).send(embed=embed, view=PlsRoleView(ctx.author, rol, reason, roles))
         await ctx.respond(f'Petición enviada correctamente ✅', ephemeral=True)
     else:
-        await ctx.respond(f'No se ha encontradom el rol `{rol}`...😔', ephemeral=True)
+        await ctx.respond(f'No se ha encontrado el rol `{rol}`...😔', ephemeral=True)
 
 
 @bot.slash_command(description='Abre una votación 📩 con ✅ y ❌')
@@ -207,53 +226,68 @@ async def vote_custom(ctx, propuesta: str, react1: str, react2: str):
 @bot.slash_command(description='Top 10 mejores comidas 🍽')
 async def food_ratings(ctx):
 
-    async with ctx.channel.typing():
+    # async with ctx.channel.typing():
 
-        members = [member for member in ctx.guild.members if not member.bot]
-        players = [FoodPlayer(member) for member in members]
+    members = [member for member in ctx.guild.members if not member.bot]
+    players = [FoodPlayer(member) for member in members]
 
-        channel = ctx.guild.get_channel(FOOD_CHANNEL_ID)
-        one_stars = await ctx.guild.fetch_emoji(ONE_STAR_REACTION_ID)
-        two_stars = await ctx.guild.fetch_emoji(TWO_STAR_REACTION_ID)
-        three_stars = await ctx.guild.fetch_emoji(THREE_STAR_REACTION_ID)
+    channel = ctx.guild.get_channel(FOOD_CHANNEL_ID)
+    one_stars = await ctx.guild.fetch_emoji(ONE_STAR_REACTION_ID)
+    two_stars = await ctx.guild.fetch_emoji(TWO_STAR_REACTION_ID)
+    three_stars = await ctx.guild.fetch_emoji(THREE_STAR_REACTION_ID)
 
-        await ctx.defer()
-        async for message in channel.history(limit=None):
+    await ctx.defer()
+    async for message in channel.history(limit=None):
 
-            if message.attachments == []:
-                continue  # No Imagenes
-            if message.reactions == []:
-                continue    # No reacciones
+        if message.attachments == []:
+            continue  # No Imagenes
+        if message.reactions == []:
+            continue    # No reacciones
 
-            players[members.index(message.author)].n_foods += 1
+        print_debug("Reaccion")
 
-            for reaction in message.reactions:
-                if reaction.emoji == one_stars:
-                    players[members.index(message.author)
-                            ].one_stars += reaction.count
-                elif reaction.emoji == two_stars:
-                    players[members.index(message.author)
-                            ].two_stars += reaction.count
-                elif reaction.emoji == three_stars:
-                    players[members.index(message.author)
-                            ].three_stars += reaction.count
+        players[members.index(message.author)].n_foods += 1
 
-        players.sort(key=FoodPlayer.get_points, reverse=True)
-        embed = discord.Embed(color=Colour.purple(), title='Top 10 Mejores Comidas 🍽',
-                              description='\n'.join(
-            f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:10])))
-        #f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`\n `   {player.n_foods} comidas - {player.get_mean_points()}`'
-        # for player_rank, player in enumerate(players[:10])))
-        await ctx.respond(embed=embed)
+        for reaction in message.reactions:
+            # any(rol.lower() == role.name.lower() for role in roles):
+            """ users = await reaction.users().flatten() """
+
+            if reaction.emoji == one_stars:
+                """ if any(user.bot for user in users):
+                    players[members.index(message.author)].one_stars += reaction.count - 1    
+                else:
+                    players[members.index(message.author)].one_stars += reaction.count """
+                players[members.index(message.author)
+                        ].one_stars += reaction.count - 1
+            elif reaction.emoji == two_stars:
+                players[members.index(message.author)
+                        ].two_stars += reaction.count - 1
+            elif reaction.emoji == three_stars:
+                players[members.index(message.author)
+                        ].three_stars += reaction.count - 1 
+
+    print_debug("Finalizado")
+    players.sort(key=FoodPlayer.get_points, reverse=True)
+    embed = discord.Embed(color=Colour.purple(), title='Top 10 Mejores Comidas 🍽',
+                          description='\n'.join(
+        f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:10])))
+    #f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`\n `   {player.n_foods} comidas - {player.get_mean_points()}`'
+    # for player_rank, player in enumerate(players[:10])))
+    await ctx.respond(embed=embed)
+
 
 @bot.slash_command(description='Top Comidas 🍽: Elige top y mes 🍴')
 @option("top", description="Top que deseas consultar",  autocomplete=discord.utils.basic_autocomplete(TOPS))
 @option("month", description="Mes que desas consultar", autocomplete=get_months)
 async def food_ratings_custom(ctx, top: int, month: str):
-    n_month = Month.get_month(month)
+    n_month = get_month(month)
 
     if n_month == -1:
-        await ctx.respond(f'El mes {month} no existe...', ephemeral=True)
+        await ctx.respond(f'El mes `{month}` no existe...', ephemeral=True)
+        return
+
+    if n_month > datetime.today().month:
+        await ctx.respond(f'No se ha inventado el viaje temporal...😅', ephemeral=True)
         return
 
     async with ctx.channel.typing():
@@ -279,16 +313,16 @@ async def food_ratings_custom(ctx, top: int, month: str):
             for reaction in message.reactions:
                 if reaction.emoji == one_stars:
                     players[members.index(message.author)
-                            ].one_stars += reaction.count
+                            ].one_stars += reaction.count - 1
                 elif reaction.emoji == two_stars:
                     players[members.index(message.author)
-                            ].two_stars += reaction.count
+                            ].two_stars += reaction.count - 1
                 elif reaction.emoji == three_stars:
                     players[members.index(message.author)
-                            ].three_stars += reaction.count
+                            ].three_stars += reaction.count - 1
 
         players.sort(key=FoodPlayer.get_points, reverse=True)
-        embed = discord.Embed(color=Colour.purple(), title=f'Top {top} Mejores Comidas de {Month.months[n_month-1]} 📅',
+        embed = discord.Embed(color=Colour.purple(), title=f'Top {top} Mejores Comidas de {MONTHS[n_month-1]} 📅',
                               description='\n'.join(f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:top])))
         await ctx.respond(embed=embed)
 
@@ -296,6 +330,7 @@ async def food_ratings_custom(ctx, top: int, month: str):
 async def set_food_rating(message, id_channel):
     if message.attachments == []:
         return
+
     # Verificar que el mensaje es una imagen
     if message.channel.id == id_channel:
         _, file_extension = os.path.splitext(
