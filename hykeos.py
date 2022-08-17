@@ -647,7 +647,7 @@ async def food_statistics_of(ctx, member: discord.Member):
             color = Colour.purple()
 
         embed = discord.Embed(color=color, title=f'Estadísticas de la comida',
-                              description=f'Se han registrado los siguientes datos de {member.mention}\n')
+                              description=f'{member.mention} tiene las siguientes estadísticas\n')
         embed.add_field(name='Puntos', value=f'{player.get_points()}', inline=True)
         embed.add_field(name='Comidas', value=player.n_foods, inline=True)
         embed.add_field(
