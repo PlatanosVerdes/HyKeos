@@ -746,13 +746,11 @@ async def check_votes():
             await vote.notify_vote()
             votes.remove(vote)  # Remove vote from list
             roles_temp.append([vote.role_1, vote.role_2, datetime.today(
-            ) + timedelta(minutes=1)])  # Deletion of the temporary role
+            ) + timedelta(days=1)])  # Deletion of the temporary role
 
-            #FIXME: timedelta -> 1 day
             print_debug(f"Vote {vote.propuesta[:35]} has ended")
 
-#FIXME: change seconds=5 -> hours=1
-@tasks.loop(seconds=5)
+@tasks.loop(hours=1)
 async def check_temporal_roles():
     if not len(roles_temp):
         return
