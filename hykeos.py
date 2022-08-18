@@ -760,7 +760,6 @@ async def check_temporal_roles():
     print_debug(f"Temporal roles: {roles_temp}")
     for role in roles_temp:
         if role[2] <= datetime.today():
-            print_debug(f'Deleted roles: {role[0].name} - {role[1].name}')
             await role[0].delete()
             await role[1].delete()
             roles_temp.remove(role)
