@@ -143,8 +143,10 @@ class VoteView(discord.ui.View):
             embed.add_field(
                 name=f'Votantes de {self.emoji_2} - `{len(self.voters_1)} 👤`', value=f'||{self.role_2.mention}||')
 
+        print_debug(f"Votacion terminada - Notificando a {self.ctx.author.mention}")
         await self.message.delete_original_message()
         await self.ctx.channel.send(embed=embed)
+        
 
     # Buttons reactions
 
@@ -169,6 +171,7 @@ class VoteView(discord.ui.View):
         embed.add_field(name=f"{self.emoji_2}",
                         value=f"{len(self.voters_2)}", inline=True)
         await interaction.response.edit_message(embed=embed)
+        print_debug(f"{interaction.user.name} ha votado {self.emoji_1}")
 
     async def button2_callback(self, interaction: discord.Interaction):
         if interaction.user in self.voters_2:
@@ -190,6 +193,7 @@ class VoteView(discord.ui.View):
         embed.add_field(name=f"{self.emoji_2}",
                         value=f"{len(self.voters_2)}", inline=True)
         await interaction.response.edit_message(embed=embed)
+        print_debug(f"{interaction.user.name} ha votado {self.emoji_2}")
 
 
 class PlsRoleView(discord.ui.View):
@@ -213,6 +217,7 @@ class PlsRoleView(discord.ui.View):
         embed = discord.Embed(color=Colour.purple(), title='Solicitud: Aceptada ✅',
                               description=f'\nRol: `{self.role.name.upper()}`\nMotivo: `{self.reason}`\n\n{fecha}')
         await interaction.user.send(embed=embed)
+        print_debug(f"{interaction.user.name} ha aceptado a {self.user.name}")
 
     @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
     async def second_button_callback(self, interaction):
@@ -224,6 +229,7 @@ class PlsRoleView(discord.ui.View):
         embed = discord.Embed(color=Colour.purple(), title='Solicitud: Denegada ❌',
                               description=f'\nRol: `{self.role.name.upper()}`\nMotivo: `{self.reason}`\n\n{fecha}')
         await interaction.user.send(embed=embed)
+        print_debug(f"{interaction.user.name} ha denegado a {self.user.name} a ser {self.role.name}")
 
 # -------------------------------
 # METHODS
@@ -300,11 +306,13 @@ async def get_type_times(ctx: discord.AutocompleteContext):
 @bot.slash_command(description='pong 🏓')
 async def ping(ctx):
     await ctx.respond('Pong 🏓')
+    print_debug(f"{ctx.author.name} ha usado /ping")
 
 
 @bot.slash_command(description='El bot te saluda.')
 async def hello(ctx):
     await ctx.respond(f'Hi {ctx.author.mention}, I\'m {bot.user.name}!')
+    print_debug(f"{ctx.author.name} ha usado /hello")
 
 
 @bot.slash_command(description='Te gusta jugar? 🎲 Este es tu juego! Prueba suerte! 🎰')
@@ -312,9 +320,11 @@ async def rnd(ctx):
     if randint(0, 1):
         await ctx.respond(f'{ctx.author.mention} Ha muerto 💀')
         await ctx.guild.kick(ctx.author)
+        print_debug(f"{ctx.author.name} ha usado /rnd y ha muerto")
     else:
         await ctx.author.add_roles(discord.utils.get(ctx.guild.roles, name='Vencio a la muerte'), atomic=True)
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
+        print_debug(f"{ctx.author.name} ha usado /rnd y ha tenido suerte")
 
 
 @bot.slash_command(description='Te gusta jugar pero le temes a la muerte porque tienes 💩? Prueba suerte con este juego! 🎰')
@@ -322,8 +332,10 @@ async def rnd_easy(ctx):
     if randint(0, 1):
         await ctx.author.move_to(None)
         await ctx.respond(f'{ctx.author.mention} A la calle 🚴')
+        print_debug(f"{ctx.author.name} ha usado /rnd_easy y ha sido movido a la calle")
     else:
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
+        print_debug(f"{ctx.author.name} ha usado /rnd_easy y ha tenido suerte")
 
 
 @bot.slash_command(description='Alguno del canal os movereis a un lugar aleatorio 🏃')
@@ -331,6 +343,7 @@ async def rnd_move_someone(ctx):
     current_channel = ctx.author.voice.channel
     if current_channel is None:
         await ctx.respond(f'{ctx.author.mention} No estas en un canal de voz.', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /rnd_move_someone pero no esta en un canal de voz")
         return
 
     member = choice(current_channel.members)
@@ -338,6 +351,7 @@ async def rnd_move_someone(ctx):
 
     await member.move_to(voice_channel)
     await ctx.respond(f'{member.mention} ha sido movido a {voice_channel.name}')
+    print_debug(f"{ctx.author.name} ha usado /rnd_move_someone y ha movido a {member.name} a {voice_channel.name}")
 
 
 @bot.slash_command(description='Todos al cine! 🎞')
@@ -350,6 +364,7 @@ async def move_to_cinema(ctx):
     role_cinema = discord.utils.get(ctx.guild.roles, name="Cineasta")
     if not ((ctx.author.guild_permissions.administrator) or (role_cinema in [role for role in ctx.author.roles])):
         await ctx.respond(f'{ctx.author.mention} No tienes permisos', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /move_to_cinema pero no tiene permisos")
         return
 
     voice_channel = discord.utils.get(
@@ -357,6 +372,7 @@ async def move_to_cinema(ctx):
     for member in current_channel.members:
         await member.move_to(voice_channel)
     await ctx.respond(f'{ctx.author.mention} Todos los miembros han sido movidos a {voice_channel.name}', delay=5.0)
+    print_debug(f"{ctx.author.name} ha usado /move_to_cinema y ha movido a todos a {voice_channel.name}")
 
 
 @bot.slash_command(description='Mueve a todos a un canal 📦')
@@ -365,16 +381,20 @@ async def move_to(ctx, voice_channel: discord.VoiceChannel):
     current_channel = ctx.author.voice.channel
     if current_channel is None:
         await ctx.respond(f'{ctx.author.mention} No estas en un canal de voz.', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /move_to pero no esta en un canal de voz")
+        return
         return
 
     if not ((ctx.author.guild_permissions.administrator) or (NAME_SUPORT_ADMIN in [role.name for role in ctx.author.roles])):
         await ctx.respond(f'{ctx.author.mention} No tienes los roles para mover a la gente', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /move_to pero no tiene permisos")
         return
 
     for member in current_channel.members:
         await member.move_to(voice_channel)
 
     await ctx.respond(f'{ctx.author.mention} has movido a todos a {voice_channel.name}', ephemeral=True)
+    print_debug(f"{ctx.author.name} ha usado /move_to y ha movido a todos a {voice_channel.name}")
 
 
 @bot.slash_command(description='Para ver todos los roles 👀')
@@ -388,6 +408,7 @@ async def roles(ctx):
     embed = discord.Embed(color=Colour.purple(), title='Roles',
                           description='\n'.join(f'{role.mention} - `{counted_roles[i]} 👤`' for i, role in enumerate(roles)))
     await ctx.respond(embed=embed)
+    print_debug(f"{ctx.author.name} ha usado /roles")
 
 
 @bot.slash_command(description='Al reformatorio! ⛓. Debe de existir el canal con el nombre: ⛓ Reformatorio ⛓')
@@ -396,6 +417,7 @@ async def reformatory(ctx, member: discord.Member):
     # Mirar si tiene el rol de reformatorio o administrador
     if not ((ctx.author.guild_permissions.administrator) or ('Staff Reformatory' in [role.name for role in ctx.author.roles])):
         await ctx.respond(f'{ctx.author.mention} No tienes permisos para hacer eso! 🤔')
+        print_debug(f"{ctx.author.name} ha usado /reformatory pero no tiene permisos")
         return
 
     name_channel = "⛓ Reformatorio ⛓"
@@ -404,6 +426,7 @@ async def reformatory(ctx, member: discord.Member):
 
     if channel_reformatory == None:
         await ctx.respond(f'No existe el canal {name_channel}', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /reformatory pero no existe el canal {name_channel}")
         return
 
     await member.move_to(channel_reformatory)
@@ -418,7 +441,7 @@ async def reformatory(ctx, member: discord.Member):
 
     current_channel = ctx.author.voice.channel
     reformatory_cells.append([member, current_channel, jail_time, message])
-    # Guardar el mensaje para editarlo luego
+    print_debug(f"{ctx.author.name} ha usado /reformatory y ha añadido a {member.name} a la cola de reformatorio")
 
 
 @bot.slash_command(description='Pide un rol al admin 🙋🏻‍♂️')
@@ -429,16 +452,19 @@ async def pls_rol(ctx, rol: discord.Role, reason: str):
     roles = ctx.guild.roles
     if rol not in roles:
         await ctx.respond(f'No se ha encontrado el rol `{rol.name}`...😔', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /pls_rol pero no existe el rol {rol.name}")
         return
 
     if rol in ctx.author.roles:
         await ctx.respond(f'Ya tienes el rol {rol.mention}', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /pls_rol pero ya tiene el rol {rol.name}")
         return
 
     embed = discord.Embed(color=discord.Colour.purple(), title='Petición de Rol',
                           description=f'Autor: {ctx.author.mention} \n\nRol: {rol.mention} \n Motivo: `{reason}`')
     await ctx.guild.get_channel(ROLE_CHANNEL_ID).send(embed=embed, view=PlsRoleView(ctx.author, rol, reason, roles))
     await ctx.respond(f'Petición enviada correctamente ✅', ephemeral=True)
+    print_debug(f"{ctx.author.name} ha usado /pls_rol y ha enviado una petición de rol para {rol.name}")
 
 
 @bot.slash_command(description='Abre una votación 📩 con ✅ y ❌')
@@ -448,6 +474,7 @@ async def pls_rol(ctx, rol: discord.Role, reason: str):
 async def vote(ctx, propuesta: str, type_time: str, timeout: int):
     if type_time.lower() not in [type_t.lower() for type_t in TIMES]:
         await ctx.respond(f'Tipo de duración no reconocido `{type_time}`', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha usado /vote pero el tipo de duración {type_time} no es reconocido")
         return
 
     embed = discord.Embed(color=discord.Colour.purple(), title='Votación Abierta\n',
@@ -472,6 +499,7 @@ async def vote(ctx, propuesta: str, type_time: str, timeout: int):
     message = await ctx.respond(embed=embed, view=vote)
     vote.message = message
     votes.append(vote)
+    print_debug(f"{ctx.author.name} ha usado /vote y ha abierto una votación")
 
 
 @bot.slash_command(description='Abre una votación 📩 con reacciones personalizadas 🎨')
@@ -510,6 +538,7 @@ async def vote_custom(ctx, propuesta: str, type_time: str, timeout: int, emoji_1
     message = await ctx.respond(embed=embed, view=vote)
     vote.message = message
     votes.append(vote)
+    print_debug(f"{ctx.author.name} ha usado /vote_custom y ha abierto una votación")
 
 
 @bot.slash_command(description='Top 10 mejores comidas 🍽')
@@ -523,7 +552,7 @@ async def food_ratings(ctx):
     two_stars = await ctx.guild.fetch_emoji(TWO_STAR_REACTION_ID)
     three_stars = await ctx.guild.fetch_emoji(THREE_STAR_REACTION_ID)
 
-    await ctx.defer()
+    await ctx.defer() 
     async for message in channel.history(limit=None):
 
         if message.attachments == []:
@@ -546,12 +575,12 @@ async def food_ratings(ctx):
                 players[members.index(message.author)
                         ].three_stars += reaction.count - 1
 
-    print_debug("Finalizado")
     players.sort(key=FoodPlayer.get_points, reverse=True)
     embed = discord.Embed(color=Colour.purple(), title='Top 10 Mejores Comidas 🍽',
                           description='\n'.join(
         f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:10])))
     await ctx.respond(embed=embed)
+    print_debug(f"{ctx.author.name} ha usado /food_ratings y ha mostrado los top 10 mejores comidas")
 
 
 @bot.slash_command(description='Top Comidas 🍽: Elige top y mes 🍴')
@@ -609,6 +638,7 @@ async def food_ratings_custom(ctx, top: int, month: str):
         embed = discord.Embed(color=Colour.purple(), title=f'Top {top} Mejores Comidas de {MONTHS[n_month-1]} 📅',
                               description='\n'.join(f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:top])))
         await ctx.respond(embed=embed)
+        print_debug(f"{ctx.author.name} ha usado /food_ratings_custom y ha mostrado los top {top} mejores comidas")
 
 
 @bot.slash_command(description='Todas las Estadisticas de Comida de un usuario 🍳')
@@ -662,6 +692,7 @@ async def food_statistics_of(ctx, member: discord.Member):
             text=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar)
 
         await ctx.respond(embed=embed)
+        print_debug(f"{ctx.author.name} ha usado /food_statistics_of y ha mostrado las estadísticas de {member.name}")
 
 
 @bot.slash_command(description='Eliminar las reacciones de estellas generadas por el bot')
@@ -669,6 +700,7 @@ async def delete_ratings(ctx, id_message: str = None):
     channel = ctx.guild.get_channel(FOOD_CHANNEL_ID)
     if channel != ctx.channel:
         await ctx.respond('No puedes eliminar las reacciones de estrellas en este canal', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha intentado eliminar las reacciones de estrellas en un canal distinto al de comidas")
         return
 
     if id_message in ("", " ", None):
@@ -678,6 +710,7 @@ async def delete_ratings(ctx, id_message: str = None):
         partial_message = channel.get_partial_message(id_message)
         if partial_message is None:
             await ctx.respond(f'No se ha encontrado el mensaje con ID `{id_message}`', ephemeral=True)
+            print_debug(f"{ctx.author.name} ha usado /delete_ratings y ha intentado eliminar las reacciones de un mensaje con ID {id_message}")
             return
 
         message = await partial_message.fetch()
@@ -692,6 +725,7 @@ async def delete_ratings(ctx, id_message: str = None):
 
     await message.clear_reactions()
     await ctx.respond(f'Reacciones eliminadas del mensaje {message.jump_url} de {message.author.mention} ✨')
+    print_debug(f"{ctx.author.name} ha usado /delete_ratings y ha eliminado las reacciones de {message.author.name}")
 
 # -------------------------------
 # TASKS
@@ -708,13 +742,15 @@ async def check_votes():
     for vote in votes:
         vote.end_time -= timedelta(seconds=VOTES_CHECK_TIME)
         if vote.end_time.total_seconds() <= 0:
+            print_debug(f"Vote {vote.propuesta[:15]} has ended, now I run notify_vote()")
             await vote.notify_vote()
             votes.remove(vote)  # Remove vote from list
             roles_temp.append([vote.role_1, vote.role_2, datetime.today(
             ) + timedelta(days=1)])  # Deletion of the temporary role
+            print_debug(f"Vote {vote.propuesta[:35]} has ended")
 
 
-@tasks.loop(hours=1)
+@tasks.loop(seconds=5)
 async def check_temporal_roles():
     if not len(roles_temp):
         return
@@ -724,6 +760,7 @@ async def check_temporal_roles():
             await role[0].delete()
             await role[1].delete()
             roles_temp.remove(role)
+            print_debug(f'Deleted roles: {role[0].name} - {role[1].name}')
 
 
 @tasks.loop(seconds=REFORMATORY_CHECK_TIME)
@@ -767,6 +804,7 @@ async def check_ref_queue():
             embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
                                   description=f'{ prisoner[0].mention} se ha portado mal. \n\n Edit: Tiempo acabado ‼')
             await prisoner[3].edit_original_message(embed=embed, delete_after=5.0)
+    print_debug(f'{ref_channel.name} has {len(reformatory_cells)} prisoners')
 
 
 # -------------------------------
