@@ -1,8 +1,9 @@
+from turtle import delay, position
 import discord
 import os
 from discord import Colour
 from discord.commands import option
-from random import randint, randrange, choice
+from random import randint, randrange, choice, shuffle, sample
 from datetime import datetime, timedelta
 from discord.ext import tasks
 
@@ -17,8 +18,13 @@ VOTES_CHECK_TIME = 5
 votes = []
 roles_temp = []
 
+# Russian Roulettes
+countdown_roulette = []
+COUNTDOWN_RROULETTE = 15
+
 # DEBUG stuff
 DEBUG = True
+
 
 def print_debug(message):
     if DEBUG:
@@ -27,7 +33,7 @@ def print_debug(message):
 
 
 TOKEN = 'OTQzODI0NDg0NTEzNzUxMDYy.Yg4rDA.p60NNYyoKLvPZrXovh6yy5EIE-g'
-ID_GUIRIS = 718460119993548800 # ID del server de 'guiris'
+ID_GUIRIS = 718460119993548800  # ID del server de 'guiris'
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -56,6 +62,32 @@ NAME_SUPORT_ADMIN = 'Suport Admin 😎'
 # -------------------------------
 
 
+class RRoulette:
+    revolvers = [["Nagant M1895", 7], ["Swiss Mini Gun C1ST", 6],
+                 ["Remington Model 1887", 6], ["Magnum", 5], ["LeMat", 9]]
+
+    def __init__(self, id, players, voice_channel, countdown, new_voice_channel=None, original_message=None, mode="Eassy", readys=0):
+        self.id = id
+        self.players = players
+        self.voice_channel = voice_channel
+        self.new_voice_channel = new_voice_channel
+        self.countdown = countdown
+        self.revolver = choice(self.revolvers)
+        self.original_message = original_message
+        self.mode = mode
+        self.readys = readys
+
+    def get_drum(self):
+        bullet = randint(0, self.revolver[1])
+        drum = []
+        for i in range(self.revolver[1]):
+            if i == bullet:
+                drum.append(1)
+            else:
+                drum.append(0)
+        return drum
+
+
 class FoodPlayer:
     one_stars_value = 1
     two_stars_value = 2
@@ -73,6 +105,159 @@ class FoodPlayer:
 
     def get_mean_points(self):
         return 0 if self.n_foods == 0 else round(self.get_points() / self.n_foods, 2)
+
+
+# ------------- VIEWS ---------------
+
+class RRouletteView(discord.ui.View):
+    def __init__(self, rroulette, drum=[], drum_order=[], drum_index=0):
+        super().__init__()
+        self.rroulette = rroulette
+        self.drum = drum
+        self.drum_order = drum_order
+        self.drum_index = drum_index
+
+        # Button
+        self.shoot_button = discord.ui.Button(
+            style=discord.ButtonStyle.red, emoji="🔫")
+        self.shoot_button.callback = self.shoot_callback
+        self.add_item(self.shoot_button)
+
+        if len(drum) == 0:
+            self.set_drum()
+        
+    async def shoot_callback(self, interaction: discord.Interaction):
+        # Check if the player is in the voice channel is the corresponding order
+        if interaction.user != self.drum_order[self.drum_index]:
+            await interaction.response.send_message(
+                f"{interaction.user.mention} Espera a tu turno impaciente", delete_after=4)
+            print_debug(f"{interaction.user} tiene que esperar a su turno")
+            return
+
+        # Check if the player is the last in the order
+        if self.drum_index == len(self.drum):
+            self.set_drum()  # Set the new drum
+
+        # Checks if the player has already been shot
+        if self.drum[self.drum_index] == 1:
+            await interaction.response.send_message(f"{interaction.user.mention} has muerto 💥💀🔫",ephemeral=True)
+            print_debug(f"{interaction.user} ha muerto")
+
+            # Check if the mode is Eassy
+            if self.rroulette.mode == "Easy":
+                await interaction.user.move_to(self.rroulette.voice_channel)
+            else:
+                await interaction.user.kick(reason="Has sido expulsado jugando a la ruleta rusa")
+
+            # Remove the player from the rroulette
+            self.rroulette.players.remove(interaction.user)
+            self.set_drum()
+
+            # Check if there is one left in the roulette wheel
+            if len(self.rroulette.players) == 1:
+                await interaction.channel.send(
+                    f"{self.rroulette.players[0].mention} ha ganado la ruleta rusa 🎉")
+                await self.rroulette.players[0].move_to(self.rroulette.voice_channel)
+                # self.rroulette.players[0].add_role()
+                print_debug(
+                    f"{self.rroulette.players[0]} ha ganado la rroulette")
+                # Check if the mode is Eassy
+                if self.rroulette.mode == "Eassy":
+                    await self.rroulette.new_voice_channel.delete()
+                return
+        # If the player has not been shot, shoot next player
+        else:
+            self.drum_index += 1
+            print_debug(f"{interaction.user} sigue vivo")
+            await interaction.response.send_message(f"{interaction.user.mention} Sigues vivo ❤",ephemeral=True)
+
+        # New message with next player
+        embed = discord.Embed(color=discord.Colour.purple(), title=f'Russian Roulette\n',
+                              description=f'Cuidado no mueras!\n')
+        embed.add_field(
+            name='Turno', value=f'{self.drum_order[self.drum_index].mention}', inline=True)
+        embed.add_field(
+            name='Modo', value=f'{self.rroulette.mode}', inline=True)
+        embed.add_field(
+            name='Revolver', value=f'{self.rroulette.revolver[0]}', inline=True)
+        embed.add_field(
+            name='Recamara', value=f'[{self.drum_index}/{self.rroulette.revolver[1]}]', inline=True)
+
+        self.shoot_button.disabled = True
+        view = RRouletteView(self.rroulette, self.drum,
+                             self.drum_order, self.drum_index)
+        await interaction.edit_original_message(embed=embed, view=None)
+        await interaction.channel.send(embed=embed, view=view)
+
+    # Set the new drum
+    def set_drum(self):
+
+        self.drum = self.rroulette.get_drum()
+        self.drum_order = self.rroulette.players
+    
+        shuffle(self.drum_order)
+
+        if len(self.drum) > len(self.rroulette.players):           
+            self.drum_order = self.drum_order * (len(self.drum) - len(self.rroulette.players))
+        elif len(self.drum) < len(self.rroulette.players):
+            self.drum_order = self.drum_order[:len(self.drum)]
+        
+        self.drum_index = 0
+
+
+
+class PrepareRRouletteView(discord.ui.View):
+
+    def __init__(self, rroulette):
+        super().__init__()
+        self.rroulette = rroulette
+        self.players_count = 0
+
+    @discord.ui.button(label="Aceptar", row=0, style=discord.ButtonStyle.success)
+    async def acept_button_callback(self, _, interaction):
+
+        if not interaction.user in self.rroulette.players:
+            await interaction.response.send_message(f"{interaction.user.mention} no estás en el canal de voz.", ephemeral=True)
+            return
+
+        await interaction.response.send_message(f"{interaction.user.mention} ha aceptado la partida de Russian Roulette.", delete_after=3)
+        print_debug(
+            f"{interaction.user.name} ha aceptado a jugar en partida de Russian Roulette.")
+
+        await self.start_roulette(interaction)
+
+    @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
+    async def reject_button_callback(self, _, interaction):
+
+        if not interaction.user in self.rroulette.players:
+            await interaction.response.send_message(f"{interaction.user.mention} no estás en el canal de voz.", ephemeral=True)
+            return
+
+        self.rroulette.players.remove(interaction.user.id)
+
+        await interaction.response.send_message(f"{interaction.user.mention} ha rechazado la partida de Russian Roulette.", delete_after=3)
+        print_debug(
+            f'{interaction.user.name} ha rechazado a jugar en la partida de Russian Roulette.')
+
+        await self.start_roulette(interaction)
+
+    async def start_roulette(self, interaction: discord.Interaction):
+        self.players_count += 1
+        if self.players_count < len(self.rroulette.players):
+            [rroulette for rroulette in countdown_roulette if rroulette.id ==
+                self.rroulette.id][0].readys = self.players_count
+            return
+
+        # Starts russian roulette
+        await interaction.channel.send(f"Ya han votado a todos los jugadores.", delete_after=3)
+        print_debug(f"Ya han votado a todos los jugadores.")
+
+        for player in self.rroulette.players:
+            await player.move_to(self.rroulette.new_voice_channel)
+
+        rroulette = [
+            rroulette for rroulette in countdown_roulette if rroulette.id == self.rroulette.id][0]
+        rroulette.countdown = datetime.today()
 
 
 class VoteView(discord.ui.View):
@@ -140,10 +325,10 @@ class VoteView(discord.ui.View):
             embed.add_field(
                 name=f'Votantes de {self.emoji_2} - `{len(self.voters_2)} 👤`', value=f'||{self.role_2.mention}||')
 
-        print_debug(f"Votacion {self.propuesta[:15]} terminada - Notificando a {len(self.voters_1) + len(self.voters_2)} usuarios")
-        
+        print_debug(
+            f"Votacion {self.propuesta[:15]} terminada - Notificando a {len(self.voters_1) + len(self.voters_2)} usuarios")
+
         await self.ctx.channel.send(embed=embed)
-        
 
     # Buttons reactions
 
@@ -204,7 +389,7 @@ class PlsRoleView(discord.ui.View):
         self.date = datetime.today()
 
     @discord.ui.button(label="Aceptar", row=0, style=discord.ButtonStyle.success)
-    async def first_button_callback(self, interaction):
+    async def first_button_callback(self, _, interaction):
 
         await interaction.user.add_roles(self.role)
         await interaction.channel.send(f"{interaction.user.mention} ha aceptado a {self.user.mention}, ahora es {self.role.mention} 🎉")
@@ -217,7 +402,7 @@ class PlsRoleView(discord.ui.View):
         print_debug(f"{interaction.user.name} ha aceptado a {self.user.name}")
 
     @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
-    async def second_button_callback(self, interaction):
+    async def second_button_callback(self, _, interaction):
 
         await interaction.channel.send(f"{interaction.user.mention} ha denegado a {self.user.mention} a ser {self.role.mention} 💀")
         await interaction.message.delete()
@@ -226,7 +411,8 @@ class PlsRoleView(discord.ui.View):
         embed = discord.Embed(color=Colour.purple(), title='Solicitud: Denegada ❌',
                               description=f'\nRol: `{self.role.name.upper()}`\nMotivo: `{self.reason}`\n\n{fecha}')
         await interaction.user.send(embed=embed)
-        print_debug(f"{interaction.user.name} ha denegado a {self.user.name} a ser {self.role.name}")
+        print_debug(
+            f"{interaction.user.name} ha denegado a {self.user.name} a ser {self.role.name}")
 
 # -------------------------------
 # METHODS
@@ -329,7 +515,8 @@ async def rnd_easy(ctx):
     if randint(0, 1):
         await ctx.author.move_to(None)
         await ctx.respond(f'{ctx.author.mention} A la calle 🚴')
-        print_debug(f"{ctx.author.name} ha usado /rnd_easy y ha sido movido a la calle")
+        print_debug(
+            f"{ctx.author.name} ha usado /rnd_easy y ha sido movido a la calle")
     else:
         await ctx.respond(f'{ctx.author.mention} Has tenido suerte 🌟')
         print_debug(f"{ctx.author.name} ha usado /rnd_easy y ha tenido suerte")
@@ -340,7 +527,8 @@ async def rnd_move_someone(ctx):
     current_channel = ctx.author.voice.channel
     if current_channel is None:
         await ctx.respond(f'{ctx.author.mention} No estas en un canal de voz.', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /rnd_move_someone pero no esta en un canal de voz")
+        print_debug(
+            f"{ctx.author.name} ha usado /rnd_move_someone pero no esta en un canal de voz")
         return
 
     member = choice(current_channel.members)
@@ -348,7 +536,8 @@ async def rnd_move_someone(ctx):
 
     await member.move_to(voice_channel)
     await ctx.respond(f'{member.mention} ha sido movido a {voice_channel.name}')
-    print_debug(f"{ctx.author.name} ha usado /rnd_move_someone y ha movido a {member.name} a {voice_channel.name}")
+    print_debug(
+        f"{ctx.author.name} ha usado /rnd_move_someone y ha movido a {member.name} a {voice_channel.name}")
 
 
 @bot.slash_command(description='Todos al cine! 🎞')
@@ -361,7 +550,8 @@ async def move_to_cinema(ctx):
     role_cinema = discord.utils.get(ctx.guild.roles, name="Cineasta")
     if not ((ctx.author.guild_permissions.administrator) or (role_cinema in [role for role in ctx.author.roles])):
         await ctx.respond(f'{ctx.author.mention} No tienes permisos', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /move_to_cinema pero no tiene permisos")
+        print_debug(
+            f"{ctx.author.name} ha usado /move_to_cinema pero no tiene permisos")
         return
 
     voice_channel = discord.utils.get(
@@ -369,7 +559,8 @@ async def move_to_cinema(ctx):
     for member in current_channel.members:
         await member.move_to(voice_channel)
     await ctx.respond(f'{ctx.author.mention} Todos los miembros han sido movidos a {voice_channel.name}', delay=5.0)
-    print_debug(f"{ctx.author.name} ha usado /move_to_cinema y ha movido a todos a {voice_channel.name}")
+    print_debug(
+        f"{ctx.author.name} ha usado /move_to_cinema y ha movido a todos a {voice_channel.name}")
 
 
 @bot.slash_command(description='Mueve a todos a un canal 📦')
@@ -378,20 +569,22 @@ async def move_to(ctx, voice_channel: discord.VoiceChannel):
     current_channel = ctx.author.voice.channel
     if current_channel is None:
         await ctx.respond(f'{ctx.author.mention} No estas en un canal de voz.', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /move_to pero no esta en un canal de voz")
-        return
+        print_debug(
+            f"{ctx.author.name} ha usado /move_to pero no esta en un canal de voz")
         return
 
     if not ((ctx.author.guild_permissions.administrator) or (NAME_SUPORT_ADMIN in [role.name for role in ctx.author.roles])):
         await ctx.respond(f'{ctx.author.mention} No tienes los roles para mover a la gente', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /move_to pero no tiene permisos")
+        print_debug(
+            f"{ctx.author.name} ha usado /move_to pero no tiene permisos")
         return
 
     for member in current_channel.members:
         await member.move_to(voice_channel)
 
     await ctx.respond(f'{ctx.author.mention} has movido a todos a {voice_channel.name}', ephemeral=True)
-    print_debug(f"{ctx.author.name} ha usado /move_to y ha movido a todos a {voice_channel.name}")
+    print_debug(
+        f"{ctx.author.name} ha usado /move_to y ha movido a todos a {voice_channel.name}")
 
 
 @bot.slash_command(description='Para ver todos los roles 👀')
@@ -414,7 +607,8 @@ async def reformatory(ctx, member: discord.Member):
     # Mirar si tiene el rol de reformatorio o administrador
     if not ((ctx.author.guild_permissions.administrator) or ('Staff Reformatory' in [role.name for role in ctx.author.roles])):
         await ctx.respond(f'{ctx.author.mention} No tienes permisos para hacer eso! 🤔')
-        print_debug(f"{ctx.author.name} ha usado /reformatory pero no tiene permisos")
+        print_debug(
+            f"{ctx.author.name} ha usado /reformatory pero no tiene permisos")
         return
 
     name_channel = "⛓ Reformatorio ⛓"
@@ -423,7 +617,8 @@ async def reformatory(ctx, member: discord.Member):
 
     if channel_reformatory == None:
         await ctx.respond(f'No existe el canal {name_channel}', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /reformatory pero no existe el canal {name_channel}")
+        print_debug(
+            f"{ctx.author.name} ha usado /reformatory pero no existe el canal {name_channel}")
         return
 
     await member.move_to(channel_reformatory)
@@ -438,7 +633,8 @@ async def reformatory(ctx, member: discord.Member):
 
     current_channel = ctx.author.voice.channel
     reformatory_cells.append([member, current_channel, jail_time, message])
-    print_debug(f"{ctx.author.name} ha usado /reformatory y ha añadido a {member.name} a la cola de reformatorio")
+    print_debug(
+        f"{ctx.author.name} ha usado /reformatory y ha añadido a {member.name} a la cola de reformatorio")
 
 
 @bot.slash_command(description='Pide un rol al admin 🙋🏻‍♂️')
@@ -449,29 +645,33 @@ async def pls_rol(ctx, rol: discord.Role, reason: str):
     roles = ctx.guild.roles
     if rol not in roles:
         await ctx.respond(f'No se ha encontrado el rol `{rol.name}`...😔', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /pls_rol pero no existe el rol {rol.name}")
+        print_debug(
+            f"{ctx.author.name} ha usado /pls_rol pero no existe el rol {rol.name}")
         return
 
     if rol in ctx.author.roles:
         await ctx.respond(f'Ya tienes el rol {rol.mention}', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /pls_rol pero ya tiene el rol {rol.name}")
+        print_debug(
+            f"{ctx.author.name} ha usado /pls_rol pero ya tiene el rol {rol.name}")
         return
 
     embed = discord.Embed(color=discord.Colour.purple(), title='Petición de Rol',
                           description=f'Autor: {ctx.author.mention} \n\nRol: {rol.mention} \n Motivo: `{reason}`')
     await ctx.guild.get_channel(ROLE_CHANNEL_ID).send(embed=embed, view=PlsRoleView(ctx.author, rol, reason, roles))
     await ctx.respond(f'Petición enviada correctamente ✅', ephemeral=True)
-    print_debug(f"{ctx.author.name} ha usado /pls_rol y ha enviado una petición de rol para {rol.name}")
+    print_debug(
+        f"{ctx.author.name} ha usado /pls_rol y ha enviado una petición de rol para {rol.name}")
 
 
 @bot.slash_command(description='Abre una votación 📩 con ✅ y ❌')
 @option("type_time", description="Tipo de duración", autocomplete=get_type_times)
-@option("timeout", description="Duración")
+@option("timeout", description="Duración", autocomplete=discord.utils.basic_autocomplete(range(1, 60)))
 @option("propuesta", description="Tema de votación")
 async def vote(ctx, propuesta: str, type_time: str, timeout: int):
     if type_time.lower() not in [type_t.lower() for type_t in TIMES]:
         await ctx.respond(f'Tipo de duración no reconocido `{type_time}`', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha usado /vote pero el tipo de duración {type_time} no es reconocido")
+        print_debug(
+            f"{ctx.author.name} ha usado /vote pero el tipo de duración {type_time} no es reconocido")
         return
 
     embed = discord.Embed(color=discord.Colour.purple(), title='Votación Abierta\n',
@@ -500,12 +700,12 @@ async def vote(ctx, propuesta: str, type_time: str, timeout: int):
 
 
 @bot.slash_command(description='Abre una votación 📩 con reacciones personalizadas 🎨')
-@option("propuesta", description="Tema de votación")
 @option("type_time", description="Tipo de duración", autocomplete=get_type_times)
-@option("timeout", description="Duración")
+@option("timeout", description="Duración", autocomplete=discord.utils.basic_autocomplete(range(1, 60)))
+@option("propuesta", description="Tema de votación")
 @option("reaccion 1", description="Pon la primer reacción")
 @option("reaccion 2", description="Pon la segunda reacción")
-async def vote_custom(ctx, propuesta: str, type_time: str, timeout: int, emoji_1: str, emoji_2: str):
+async def vote_custom(ctx, type_time: str, timeout: int, propuesta: str, emoji_1: str, emoji_2: str):
     if type_time.lower() not in [type_t.lower() for type_t in TIMES]:
         await ctx.respond(f'Tipo de duración no reconocido `{type_time}`', ephemeral=True)
         return
@@ -535,7 +735,8 @@ async def vote_custom(ctx, propuesta: str, type_time: str, timeout: int, emoji_1
     message = await ctx.respond(embed=embed, view=vote)
     vote.message = message
     votes.append(vote)
-    print_debug(f"{ctx.author.name} ha usado /vote_custom y ha abierto una votación")
+    print_debug(
+        f"{ctx.author.name} ha usado /vote_custom y ha abierto una votación")
 
 
 @bot.slash_command(description='Top 10 mejores comidas 🍽')
@@ -549,7 +750,7 @@ async def food_ratings(ctx):
     two_stars = await ctx.guild.fetch_emoji(TWO_STAR_REACTION_ID)
     three_stars = await ctx.guild.fetch_emoji(THREE_STAR_REACTION_ID)
 
-    await ctx.defer() 
+    await ctx.defer()
     async for message in channel.history(limit=None):
 
         if message.attachments == []:
@@ -577,7 +778,8 @@ async def food_ratings(ctx):
                           description='\n'.join(
         f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:10])))
     await ctx.respond(embed=embed)
-    print_debug(f"{ctx.author.name} ha usado /food_ratings y ha mostrado los top 10 mejores comidas")
+    print_debug(
+        f"{ctx.author.name} ha usado /food_ratings y ha mostrado los top 10 mejores comidas")
 
 
 @bot.slash_command(description='Top Comidas 🍽: Elige top y mes 🍴')
@@ -635,7 +837,8 @@ async def food_ratings_custom(ctx, top: int, month: str):
         embed = discord.Embed(color=Colour.purple(), title=f'Top {top} Mejores Comidas de {MONTHS[n_month-1]} 📅',
                               description='\n'.join(f'`{ranking_icon(player_rank+1)} {player.member.name} - {player.get_points()} puntos`' for player_rank, player in enumerate(players[:top])))
         await ctx.respond(embed=embed)
-        print_debug(f"{ctx.author.name} ha usado /food_ratings_custom y ha mostrado los top {top} mejores comidas")
+        print_debug(
+            f"{ctx.author.name} ha usado /food_ratings_custom y ha mostrado los top {top} mejores comidas")
 
 
 @bot.slash_command(description='Todas las Estadisticas de Comida de un usuario 🍳')
@@ -675,7 +878,8 @@ async def food_statistics_of(ctx, member: discord.Member):
 
         embed = discord.Embed(color=color, title=f'Estadísticas de la comida 🍽',
                               description=f'{member.mention} tiene las siguientes estadísticas\n')
-        embed.add_field(name='Puntos', value=f'{player.get_points()}', inline=True)
+        embed.add_field(
+            name='Puntos', value=f'{player.get_points()}', inline=True)
         embed.add_field(name='Comidas', value=player.n_foods, inline=True)
         embed.add_field(
             name="Media:", value=f'{player.get_mean_points()}', inline=True)
@@ -689,7 +893,8 @@ async def food_statistics_of(ctx, member: discord.Member):
             text=f'{member.name}#{member.discriminator}', icon_url=member.display_avatar)
 
         await ctx.respond(embed=embed)
-        print_debug(f"{ctx.author.name} ha usado /food_statistics_of y ha mostrado las estadísticas de {member.name}")
+        print_debug(
+            f"{ctx.author.name} ha usado /food_statistics_of y ha mostrado las estadísticas de {member.name}")
 
 
 @bot.slash_command(description='Eliminar las reacciones de estellas generadas por el bot')
@@ -697,7 +902,8 @@ async def delete_ratings(ctx, id_message: str = None):
     channel = ctx.guild.get_channel(FOOD_CHANNEL_ID)
     if channel != ctx.channel:
         await ctx.respond('No puedes eliminar las reacciones de estrellas en este canal', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha intentado eliminar las reacciones de estrellas en un canal distinto al de comidas")
+        print_debug(
+            f"{ctx.author.name} ha intentado eliminar las reacciones de estrellas en un canal distinto al de comidas")
         return
 
     if id_message in ("", " ", None):
@@ -707,7 +913,8 @@ async def delete_ratings(ctx, id_message: str = None):
         partial_message = channel.get_partial_message(id_message)
         if partial_message is None:
             await ctx.respond(f'No se ha encontrado el mensaje con ID `{id_message}`', ephemeral=True)
-            print_debug(f"{ctx.author.name} ha usado /delete_ratings y ha intentado eliminar las reacciones de un mensaje con ID {id_message}")
+            print_debug(
+                f"{ctx.author.name} ha usado /delete_ratings y ha intentado eliminar las reacciones de un mensaje con ID {id_message}")
             return
 
         message = await partial_message.fetch()
@@ -722,24 +929,118 @@ async def delete_ratings(ctx, id_message: str = None):
 
     await message.clear_reactions()
     await ctx.respond(f'Reacciones eliminadas del mensaje {message.jump_url} de {message.author.mention} ✨')
-    print_debug(f"{ctx.author.name} ha usado /delete_ratings y ha eliminado las reacciones de {message.author.name}")
+    print_debug(
+        f"{ctx.author.name} ha usado /delete_ratings y ha eliminado las reacciones de {message.author.name}")
+
 
 @bot.slash_command(description='Eliminar roles de votacion')
 async def delete_vote_roles(ctx):
-    if discord.utils.get(ctx.author.roles, name=NAME_SUPORT_ADMIN) is None or not ctx.author.guild_permissions.administrator:
+    if not ctx.author.guild_permissions.administrator:
         await ctx.respond('No tienes permisos para eliminar roles de votación', ephemeral=True)
-        print_debug(f"{ctx.author.name} ha intentado eliminar roles de votación pero no tiene permisos")
         return
 
     for role in ctx.guild.roles:
         if role.name.startswith('V_R'):
             await role.delete()
     await ctx.respond('Roles de votación eliminados')
-    print_debug(f"{ctx.author.name} ha usado /delete_vote_roles y ha eliminado los roles de votación")
+    print_debug(
+        f"{ctx.author.name} ha usado /delete_vote_roles y ha eliminado los roles de votación")
+
+
+@bot.slash_command(description='Eliminar canales de ruleta rusa')
+async def delete_roulette_channels(ctx):
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.respond('No tienes permisos para eliminar roles de votación', ephemeral=True)
+        return
+
+    await ctx.defer()
+    for channel in ctx.guild.channels:
+        if channel.name.startswith('Ruleta'):
+            await channel.delete()
+    await ctx.respond('Canales de ruleta rusa eliminados')
+    print_debug(
+        f"{ctx.author.name} ha usado /delete_vote_roles y ha eliminado los roles de votación")
+
+
+@bot.slash_command(description='Vamos a jugar a la ruleta rusa 👤🔫')
+@option("mode", description="Elige el tipo de modo",  autocomplete=discord.utils.basic_autocomplete(["Easy", "Hard"]))
+async def russian_roulette(ctx, mode: str):
+#    if ctx.author.voice is None:
+#        print_debug(
+#            f"{ctx.author.name} ha intentado jugar a la ruleta rusa sin estar en un canal de voz")
+#        await ctx.respond('Debes estar en un canal de voz para jugar a la ruleta rusa', ephemeral=True)
+#        return
+#
+#    players = ctx.author.voice.channel.members
+#
+#    if len(players) < 2:
+#        await ctx.respond('Debe de haber por lo menos dos jugadores para poder jugar', ephemeral=True)
+#        print_debug(
+#            f"{ctx.author.name} ha intentado jugar a la ruleta rusa en un canal de voz con menos de dos jugadores")
+#        return
+#
+#    if mode == "Easy":
+#        new_voice = await ctx.guild.create_voice_channel(name='Ruleta rusa 👤🔫', category=ctx.author.voice.channel.category, position=0)
+#        rroulette = RRoulette(datetime.now().strftime("%y%f%d"), players, ctx.author.voice.channel,
+#                              datetime.today() + timedelta(seconds=COUNTDOWN_RROULETTE), new_voice_channel=new_voice, mode=mode)
+#    else:
+#        rroulette = RRoulette(datetime.now().strftime("%y%f%d"), players, ctx.author.voice.channel,
+#                              datetime.today() + timedelta(seconds=COUNTDOWN_RROULETTE), mode=mode)
+#
+#    embed = discord.Embed(color=discord.Colour.purple(), title=f'Countdown Russian roulette {mode} 🕔 🔫',
+#                          description=f'Quereis jugar a la ruleta rusa?\n\nLa ruleta rusa comienza en `{COUNTDOWN_RROULETTE}` segundos')
+#    message = await ctx.respond(embed=embed, view=PrepareRRouletteView(rroulette))
+#    rroulette.original_message = message
+#
+#    countdown_roulette.append(rroulette)
+#
+    await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
 
 # -------------------------------
 # TASKS
 # -------------------------------
+
+@tasks.loop(seconds=1)
+async def start_russian_roulettes():
+    if not len(countdown_roulette):
+        return
+
+    for rroulette in countdown_roulette:
+        if rroulette.countdown < datetime.now():
+            if rroulette.readys < 1:
+                print_debug(
+                    f"No se ha podido iniciar la ruleta rusa porque no hay suficientes jugadores")
+                if rroulette.mode == "Easy":
+                    print_debug(
+                        f"Eliminando el canal de voz creado para la ruleta rusa")
+                    await rroulette.new_voice_channel.delete()
+                await rroulette.original_message.delete_original_message()
+                countdown_roulette.remove(rroulette)
+                return
+            
+            view = RRouletteView(rroulette,drum=[])
+            embed = discord.Embed(color=discord.Colour.purple(), title=f'Russian Roulette - {rroulette.mode}\n',
+                                  description=f'Cuidado no mueras!\n')
+            embed.add_field(
+                name='Turno', value=f'{view.drum_order[0].mention}', inline=True)
+            embed.add_field(
+                name='Modo', value=f'{rroulette.mode}', inline=True)
+            embed.add_field(
+                name='Revolver', value=f'{rroulette.revolver[0]}', inline=True)
+            embed.add_field(
+                name='Recamara', value=f'[{0}/{rroulette.revolver[1]}]', inline=True)
+            
+            await rroulette.original_message.channel.send(embed=embed, view=view)
+            await rroulette.original_message.delete_original_message()
+
+            countdown_roulette.remove(rroulette)
+
+            return
+
+        countdown = rroulette.countdown - datetime.today()
+        await rroulette.original_message.edit_original_message(embed=discord.Embed(color=discord.Colour.purple(), title=f'Countdown Russian roulette - {rroulette.mode}🕔 🔫',
+                                                                                   description=f'Quereis jugar a la ruleta rusa?\n\nLa ruleta rusa comienza en `{countdown.seconds}` segundos'))
+        print_debug(f"Roulette mode:{rroulette.mode} - {countdown.seconds}")
 
 
 @tasks.loop(seconds=VOTES_CHECK_TIME)
@@ -752,7 +1053,8 @@ async def check_votes():
     for vote in votes:
         vote.end_time -= timedelta(seconds=VOTES_CHECK_TIME)
         if vote.end_time.total_seconds() <= 0:
-            print_debug(f"Vote {vote.propuesta[:15]} has ended, now I run notify_vote()")
+            print_debug(
+                f"Vote {vote.propuesta[:15]} has ended, now I run notify_vote()")
             await vote.notify_vote()
             votes.remove(vote)  # Remove vote from list
             roles_temp.append([vote.role_1, vote.role_2, datetime.today(
@@ -760,11 +1062,12 @@ async def check_votes():
 
             print_debug(f"Vote {vote.propuesta[:35]} has ended")
 
+
 @tasks.loop(hours=1)
 async def check_temporal_roles():
     if not len(roles_temp):
         return
-    
+
     print_debug(f"Temporal roles: {roles_temp}")
     for role in roles_temp:
         if role[2] <= datetime.today():
@@ -832,6 +1135,8 @@ async def on_ready():
     check_votes.start()
     print_debug("Initialize temporal roles task loop")
     check_temporal_roles.start()
+    print_debug("Initialize russian roulette task loop")
+    start_russian_roulettes.start()
 
 
 @bot.event
