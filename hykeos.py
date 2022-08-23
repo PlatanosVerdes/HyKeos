@@ -1,4 +1,3 @@
-from turtle import delay, position
 import discord
 import os
 from discord import Colour
