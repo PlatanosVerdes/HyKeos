@@ -20,7 +20,6 @@ roles_temp = []
 # DEBUG stuff
 DEBUG = True
 
-
 def print_debug(message):
     if DEBUG:
         print(f"[{str(datetime.now()).split(' ')[1]} - DEBUG] {message}")
@@ -28,8 +27,7 @@ def print_debug(message):
 
 
 TOKEN = 'OTQzODI0NDg0NTEzNzUxMDYy.Yg4rDA.p60NNYyoKLvPZrXovh6yy5EIE-g'
-ID_GUIRIS = 718460119993548800
-ID_ADMIN = 588492819606405133
+ID_GUIRIS = 718460119993548800 # ID del server de 'guiris'
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -52,7 +50,6 @@ MONTHS = ("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
 TIMES = ("Dias", "Horas", "Minutos")
 
 NAME_SUPORT_ADMIN = 'Suport Admin 😎'
-
 
 # -------------------------------
 # CLASSES
@@ -80,10 +77,10 @@ class FoodPlayer:
 
 class VoteView(discord.ui.View):
 
-    def __init__(self, ctx, propuesta, role_1, role_2, end_time=timedelta(hours=1), emoji_1="✅", emoji_2="❌", message=None):
+    def __init__(self, ctx, propuesta, role_1, role_2, end_time=timedelta(hours=1), emoji_1="✅", emoji_2="❌", message_id=None):
         super().__init__()
         self.ctx = ctx
-        self.message = message
+        message_id = message_id
         self.propuesta = propuesta
         self.role_1 = role_1
         self.role_2 = role_2
@@ -121,7 +118,7 @@ class VoteView(discord.ui.View):
             embed.add_field(
                 name=f'Votantes de {self.emoji_1} - `{len(self.voters_1)} 👤`', value=f'||{self.role_1.mention}||')
             embed.add_field(
-                name=f'Votantes de {self.emoji_2} - `{len(self.voters_1)} 👤`', value=f'||{self.role_2.mention}||')
+                name=f'Votantes de {self.emoji_2} - `{len(self.voters_2)} 👤`', value=f'||{self.role_2.mention}||')
 
         elif len(self.voters_1) < len(self.voters_2):
             embed = discord.Embed(color=discord.Colour.purple(), title=f'Votación Terminada\n',
@@ -133,7 +130,7 @@ class VoteView(discord.ui.View):
             embed.add_field(
                 name=f'Votantes de {self.emoji_1} - `{len(self.voters_1)} 👤`', value=f'||{self.role_1.mention}||')
             embed.add_field(
-                name=f'Votantes de {self.emoji_2} - `{len(self.voters_1)} 👤`', value=f'||{self.role_2.mention}||')
+                name=f'Votantes de {self.emoji_2} - `{len(self.voters_2)} 👤`', value=f'||{self.role_2.mention}||')
         else:
             embed = discord.Embed(color=discord.Colour.purple(), title=f'Votación Empatada\n',
                                   description=f'Autor: {self.ctx.author.mention}\nPropuesta: `{self.propuesta}`\n\n')
@@ -141,10 +138,10 @@ class VoteView(discord.ui.View):
             embed.add_field(
                 name=f'Votantes de {self.emoji_1} - `{len(self.voters_1)} 👤`', value=f'||{self.role_1.mention}||')
             embed.add_field(
-                name=f'Votantes de {self.emoji_2} - `{len(self.voters_1)} 👤`', value=f'||{self.role_2.mention}||')
+                name=f'Votantes de {self.emoji_2} - `{len(self.voters_2)} 👤`', value=f'||{self.role_2.mention}||')
 
-        print_debug(f"Votacion terminada - Notificando a {self.ctx.author.mention}")
-        await self.message.delete_original_message()
+        print_debug(f"Votacion {self.propuesta[:15]} terminada - Notificando a {len(self.voters_1) + len(self.voters_2)} usuarios")
+        
         await self.ctx.channel.send(embed=embed)
         
 
@@ -405,7 +402,7 @@ async def roles(ctx):
     roles = sorted(roles, key=lambda x: x.position, reverse=True)
     counted_roles = [len(rol.members) for rol in roles]
 
-    embed = discord.Embed(color=Colour.purple(), title='Roles',
+    embed = discord.Embed(color=Colour.purple(), title=f"Roles de {ctx.guild.name}",
                           description='\n'.join(f'{role.mention} - `{counted_roles[i]} 👤`' for i, role in enumerate(roles)))
     await ctx.respond(embed=embed)
     print_debug(f"{ctx.author.name} ha usado /roles")
@@ -496,8 +493,8 @@ async def vote(ctx, propuesta: str, type_time: str, timeout: int):
         vote = VoteView(ctx, propuesta, role_1, role_2,
                         end_time=timedelta(minutes=timeout))
 
-    message = await ctx.respond(embed=embed, view=vote)
-    vote.message = message
+    interaction = await ctx.respond(embed=embed, view=vote)
+    vote.message_id = interaction.id
     votes.append(vote)
     print_debug(f"{ctx.author.name} ha usado /vote y ha abierto una votación")
 
@@ -726,6 +723,19 @@ async def delete_ratings(ctx, id_message: str = None):
     await message.clear_reactions()
     await ctx.respond(f'Reacciones eliminadas del mensaje {message.jump_url} de {message.author.mention} ✨')
     print_debug(f"{ctx.author.name} ha usado /delete_ratings y ha eliminado las reacciones de {message.author.name}")
+
+@bot.slash_command(description='Eliminar roles de votacion')
+async def delete_vote_roles(ctx):
+    if discord.utils.get(ctx.author.roles, name=NAME_SUPORT_ADMIN) is None or not ctx.author.guild_permissions.administrator:
+        await ctx.respond('No tienes permisos para eliminar roles de votación', ephemeral=True)
+        print_debug(f"{ctx.author.name} ha intentado eliminar roles de votación pero no tiene permisos")
+        return
+
+    for role in ctx.guild.roles:
+        if role.name.startswith('V_R'):
+            await role.delete()
+    await ctx.respond('Roles de votación eliminados')
+    print_debug(f"{ctx.author.name} ha usado /delete_vote_roles y ha eliminado los roles de votación")
 
 # -------------------------------
 # TASKS
