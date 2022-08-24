@@ -65,8 +65,8 @@ class RRoulette:
     revolvers = [["Nagant M1895", 7], ["Swiss Mini Gun C1ST", 6],
                  ["Remington Model 1887", 6], ["Magnum", 5], ["LeMat", 9]]
 
-    def __init__(self, id, players, voice_channel, countdown, new_voice_channel=None, original_message=None, mode="Eassy", readys=0):
-        self.id = id
+    def __init__(self, id_rr, countdown, voice_channel, players=[], new_voice_channel=None, original_message=None, mode="Easy", readys=0):
+        self.id = id_rr
         self.players = players
         self.voice_channel = voice_channel
         self.new_voice_channel = new_voice_channel
@@ -77,7 +77,7 @@ class RRoulette:
         self.readys = readys
 
     def get_drum(self):
-        bullet = randint(0, self.revolver[1])
+        bullet = randint(0, self.revolver[1]-1)
         drum = []
         for i in range(self.revolver[1]):
             if i == bullet:
@@ -116,20 +116,15 @@ class RRouletteView(discord.ui.View):
         self.drum_order = drum_order
         self.drum_index = drum_index
 
-        # Button
-        self.shoot_button = discord.ui.Button(
-            style=discord.ButtonStyle.red, emoji="🔫")
-        self.shoot_button.callback = self.shoot_callback
-        self.add_item(self.shoot_button)
-
         if len(drum) == 0:
             self.set_drum()
-        
-    async def shoot_callback(self, interaction: discord.Interaction):
+
+    @discord.ui.button(emoji="🔫", style=discord.ButtonStyle.red)
+    async def shoot_callback(self, button, interaction):
         # Check if the player is in the voice channel is the corresponding order
         if interaction.user != self.drum_order[self.drum_index]:
             await interaction.response.send_message(
-                f"{interaction.user.mention} Espera a tu turno impaciente", delete_after=4)
+                f"{interaction.user.mention} Espera a tu turno impaciente", delete_after=3)
             print_debug(f"{interaction.user} tiene que esperar a su turno")
             return
 
@@ -137,12 +132,15 @@ class RRouletteView(discord.ui.View):
         if self.drum_index == len(self.drum):
             self.set_drum()  # Set the new drum
 
+        # Get the embed message
+        original_embed = interaction.message.embeds[0]
+
         # Checks if the player has already been shot
         if self.drum[self.drum_index] == 1:
-            await interaction.response.send_message(f"{interaction.user.mention} has muerto 💥💀🔫",ephemeral=True)
+            original_embed.add_field(name="Resultado", value=f"💀")
             print_debug(f"{interaction.user} ha muerto")
 
-            # Check if the mode is Eassy
+            # Check if the mode is Easy
             if self.rroulette.mode == "Easy":
                 await interaction.user.move_to(self.rroulette.voice_channel)
             else:
@@ -152,23 +150,36 @@ class RRouletteView(discord.ui.View):
             self.rroulette.players.remove(interaction.user)
             self.set_drum()
 
-            # Check if there is one left in the roulette wheel
-            if len(self.rroulette.players) == 1:
-                await interaction.channel.send(
-                    f"{self.rroulette.players[0].mention} ha ganado la ruleta rusa 🎉")
-                await self.rroulette.players[0].move_to(self.rroulette.voice_channel)
-                # self.rroulette.players[0].add_role()
-                print_debug(
-                    f"{self.rroulette.players[0]} ha ganado la rroulette")
-                # Check if the mode is Eassy
-                if self.rroulette.mode == "Eassy":
-                    await self.rroulette.new_voice_channel.delete()
-                return
         # If the player has not been shot, shoot next player
         else:
             self.drum_index += 1
             print_debug(f"{interaction.user} sigue vivo")
-            await interaction.response.send_message(f"{interaction.user.mention} Sigues vivo ❤",ephemeral=True)
+            original_embed.add_field(name="Resultado", value=f"❤")
+
+        # Check if there is one left in the roulette wheel
+        if len(self.rroulette.players) == 1:
+            await interaction.channel.send(
+                f"{self.rroulette.players[0].mention} ha ganado la ruleta rusa 🎉")
+            print_debug(f"{self.rroulette.players}")
+
+            await self.add_role(interaction)
+
+            print_debug(
+                f"{self.rroulette.players[0]} ha ganado la rroulette")
+            # Check if the mode is Easy
+            if self.rroulette.mode == "Easy":
+                await self.rroulette.players[0].move_to(self.rroulette.voice_channel)
+                await self.rroulette.new_voice_channel.delete()
+                print_debug(
+                    f"Se ha eliminado el canal de voz de la ruleta rusa")
+
+            button.disabled = True
+            await interaction.response.edit_message(embed=original_embed, view=self)
+            return
+
+        # Edit original message with the result and disable button
+        button.disabled = True
+        await interaction.response.edit_message(embed=original_embed, view=self)
 
         # New message with next player
         embed = discord.Embed(color=discord.Colour.purple(), title=f'Russian Roulette\n',
@@ -182,10 +193,8 @@ class RRouletteView(discord.ui.View):
         embed.add_field(
             name='Recamara', value=f'[{self.drum_index}/{self.rroulette.revolver[1]}]', inline=True)
 
-        self.shoot_button.disabled = True
         view = RRouletteView(self.rroulette, self.drum,
                              self.drum_order, self.drum_index)
-        await interaction.edit_original_message(embed=embed, view=None)
         await interaction.channel.send(embed=embed, view=view)
 
     # Set the new drum
@@ -193,29 +202,53 @@ class RRouletteView(discord.ui.View):
 
         self.drum = self.rroulette.get_drum()
         self.drum_order = self.rroulette.players
-    
+
         shuffle(self.drum_order)
 
-        if len(self.drum) > len(self.rroulette.players):           
-            self.drum_order = self.drum_order * (len(self.drum) - len(self.rroulette.players))
+        if len(self.drum) > len(self.rroulette.players):
+            self.drum_order = self.drum_order * \
+                (len(self.drum) - len(self.rroulette.players))
         elif len(self.drum) < len(self.rroulette.players):
             self.drum_order = self.drum_order[:len(self.drum)]
-        
+
         self.drum_index = 0
 
+    async def add_role(self, interaction):
+        level = 0
+        roles_user = self.rroulette.players[0].roles
+        for role in roles_user:
+            if role.name.startswith("Ruleta Rusa"):
+                level = int(role.name.split(" ")[-1])
+                break
+        print_debug(f"El ganador tiene Nivel: {level}")
+        roles = interaction.guild.roles
+        next_level = 0
+        for role in roles:
+            if role.name.startswith("Ruleta Rusa") and int(role.name.split(" ")[-1]) == level + 1:
+                next_level = role
+                break
+        if next_level != 0:
+            await self.rroulette.players[0].add_roles(next_level)
+            print_debug(f"{self.rroulette.players[0]} ha subido de nivel")
+        else:
+            new_role = await interaction.guild.create_role(name=f"Ruleta Rusa N{level + 1}", color=discord.Colour.yellow(
+            ), permissions=discord.Permissions(permissions=2150878272), mentionable=True, reason=f'Siguiente Nivel de la Ruleta Rusa')
+            await self.rroulette.players[0].add_roles(new_role)
 
 
 class PrepareRRouletteView(discord.ui.View):
 
-    def __init__(self, rroulette):
+    def __init__(self, potential_players, rroulette_id):
         super().__init__()
-        self.rroulette = rroulette
+        self.potential_players = potential_players
+        self.rroulette_id = rroulette_id
+
         self.players_count = 0
 
     @discord.ui.button(label="Aceptar", row=0, style=discord.ButtonStyle.success)
     async def acept_button_callback(self, _, interaction):
 
-        if not interaction.user in self.rroulette.players:
+        if not interaction.user in self.potential_players:
             await interaction.response.send_message(f"{interaction.user.mention} no estás en el canal de voz.", ephemeral=True)
             return
 
@@ -223,40 +256,19 @@ class PrepareRRouletteView(discord.ui.View):
         print_debug(
             f"{interaction.user.name} ha aceptado a jugar en partida de Russian Roulette.")
 
-        await self.start_roulette(interaction)
+        for rroulette in countdown_roulette:
+            if rroulette.id == self.rroulette_id:
 
-    @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
-    async def reject_button_callback(self, _, interaction):
+                # Add the player to the rroulette
+                rroulette.players.append(interaction.user)
+                self.players_count += 1
 
-        if not interaction.user in self.rroulette.players:
-            await interaction.response.send_message(f"{interaction.user.mention} no estás en el canal de voz.", ephemeral=True)
-            return
-
-        self.rroulette.players.remove(interaction.user.id)
-
-        await interaction.response.send_message(f"{interaction.user.mention} ha rechazado la partida de Russian Roulette.", delete_after=3)
-        print_debug(
-            f'{interaction.user.name} ha rechazado a jugar en la partida de Russian Roulette.')
-
-        await self.start_roulette(interaction)
-
-    async def start_roulette(self, interaction: discord.Interaction):
-        self.players_count += 1
-        if self.players_count < len(self.rroulette.players):
-            [rroulette for rroulette in countdown_roulette if rroulette.id ==
-                self.rroulette.id][0].readys = self.players_count
-            return
-
-        # Starts russian roulette
-        await interaction.channel.send(f"Ya han votado a todos los jugadores.", delete_after=3)
-        print_debug(f"Ya han votado a todos los jugadores.")
-
-        for player in self.rroulette.players:
-            await player.move_to(self.rroulette.new_voice_channel)
-
-        rroulette = [
-            rroulette for rroulette in countdown_roulette if rroulette.id == self.rroulette.id][0]
-        rroulette.countdown = datetime.today()
+                # Check is the last player has joined the rroulette
+                if self.players_count == len(self.potential_players):
+                    print_debug(f"Ya han votado a todos los jugadores.")
+                    await interaction.channel.send(f"Ya han votado a todos los jugadores.", delete_after=3)
+                    rroulette.countdown = datetime.today()
+                break
 
 
 class VoteView(discord.ui.View):
@@ -964,40 +976,41 @@ async def delete_roulette_channels(ctx):
 @bot.slash_command(description='Vamos a jugar a la ruleta rusa 👤🔫')
 @option("mode", description="Elige el tipo de modo",  autocomplete=discord.utils.basic_autocomplete(["Easy", "Hard"]))
 async def russian_roulette(ctx, mode: str):
-#    if ctx.author.voice is None:
-#        print_debug(
-#            f"{ctx.author.name} ha intentado jugar a la ruleta rusa sin estar en un canal de voz")
-#        await ctx.respond('Debes estar en un canal de voz para jugar a la ruleta rusa', ephemeral=True)
-#        return
-#
-#    players = ctx.author.voice.channel.members
-#
-#    if len(players) < 2:
-#        await ctx.respond('Debe de haber por lo menos dos jugadores para poder jugar', ephemeral=True)
-#        print_debug(
-#            f"{ctx.author.name} ha intentado jugar a la ruleta rusa en un canal de voz con menos de dos jugadores")
-#        return
-#
-#    if mode == "Easy":
-#        new_voice = await ctx.guild.create_voice_channel(name='Ruleta rusa 👤🔫', category=ctx.author.voice.channel.category, position=0)
-#        rroulette = RRoulette(datetime.now().strftime("%y%f%d"), players, ctx.author.voice.channel,
-#                              datetime.today() + timedelta(seconds=COUNTDOWN_RROULETTE), new_voice_channel=new_voice, mode=mode)
-#    else:
-#        rroulette = RRoulette(datetime.now().strftime("%y%f%d"), players, ctx.author.voice.channel,
-#                              datetime.today() + timedelta(seconds=COUNTDOWN_RROULETTE), mode=mode)
-#
-#    embed = discord.Embed(color=discord.Colour.purple(), title=f'Countdown Russian roulette {mode} 🕔 🔫',
-#                          description=f'Quereis jugar a la ruleta rusa?\n\nLa ruleta rusa comienza en `{COUNTDOWN_RROULETTE}` segundos')
-#    message = await ctx.respond(embed=embed, view=PrepareRRouletteView(rroulette))
-#    rroulette.original_message = message
-#
-#    countdown_roulette.append(rroulette)
-#
-    await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
+    # await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
+    # return
+    if mode not in ("Easy", "Hard"):
+        await ctx.respond('El modo debe ser Easy o Hard', ephemeral=True)
+        return
+
+    if ctx.author.voice is None:
+        print_debug(
+            f"{ctx.author.name} ha intentado jugar a la ruleta rusa sin estar en un canal de voz")
+        await ctx.respond('Debes estar en un canal de voz para jugar a la ruleta rusa', ephemeral=True)
+        return
+
+    potential_players = ctx.author.voice.channel.members
+
+    if len(potential_players) < 2:
+        await ctx.respond('Debe de haber por lo menos dos jugadores para poder jugar', ephemeral=True)
+        print_debug(
+            f"{ctx.author.name} ha intentado jugar a la ruleta rusa en un canal de voz con menos de dos jugadores")
+        return
+
+    rroulette = RRoulette(datetime.now().strftime("%y%f%d"), datetime.today(
+    ) + timedelta(seconds=COUNTDOWN_RROULETTE), ctx.author.voice.channel, mode=mode)
+
+    embed = discord.Embed(color=discord.Colour.purple(), title=f'Countdown Russian roulette {mode} 🕔 🔫',
+                          description=f'Quereis jugar a la ruleta rusa?\n\nLa ruleta rusa comienza en `{COUNTDOWN_RROULETTE}` segundos')
+    message = await ctx.respond(embed=embed, view=PrepareRRouletteView(potential_players, rroulette.id))
+    rroulette.original_message = message
+
+    countdown_roulette.append(rroulette)
+
 
 # -------------------------------
 # TASKS
 # -------------------------------
+
 
 @tasks.loop(seconds=1)
 async def start_russian_roulettes():
@@ -1006,18 +1019,21 @@ async def start_russian_roulettes():
 
     for rroulette in countdown_roulette:
         if rroulette.countdown < datetime.now():
-            if rroulette.readys < 1:
+            if len(rroulette.players) < 1:
                 print_debug(
                     f"No se ha podido iniciar la ruleta rusa porque no hay suficientes jugadores")
-                if rroulette.mode == "Easy":
-                    print_debug(
-                        f"Eliminando el canal de voz creado para la ruleta rusa")
-                    await rroulette.new_voice_channel.delete()
                 await rroulette.original_message.delete_original_message()
                 countdown_roulette.remove(rroulette)
                 return
-            
-            view = RRouletteView(rroulette,drum=[])
+
+            if rroulette.mode == "Easy":
+                new_voice_channel = await rroulette.voice_channel.category.create_voice_channel(name='Ruleta rusa 👤🔫')
+                rroulette.new_voice_channel = new_voice_channel
+
+                for player in rroulette.players:
+                    await player.move_to(new_voice_channel)
+
+            view = RRouletteView(rroulette)
             embed = discord.Embed(color=discord.Colour.purple(), title=f'Russian Roulette - {rroulette.mode}\n',
                                   description=f'Cuidado no mueras!\n')
             embed.add_field(
@@ -1028,7 +1044,7 @@ async def start_russian_roulettes():
                 name='Revolver', value=f'{rroulette.revolver[0]}', inline=True)
             embed.add_field(
                 name='Recamara', value=f'[{0}/{rroulette.revolver[1]}]', inline=True)
-            
+
             await rroulette.original_message.channel.send(embed=embed, view=view)
             await rroulette.original_message.delete_original_message()
 
