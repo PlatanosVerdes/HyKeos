@@ -213,25 +213,26 @@ class RRouletteView(discord.ui.View):
 
         self.drum_index = 0
 
+    # Add the role to the player
     async def add_role(self, interaction):
         level = 0
         roles_user = self.rroulette.players[0].roles
         for role in roles_user:
             if role.name.startswith("Ruleta Rusa"):
-                level = int(role.name.split(" ")[-1])
+                level = int(role.name[-1])
                 break
         print_debug(f"El ganador tiene Nivel: {level}")
         roles = interaction.guild.roles
         next_level = 0
         for role in roles:
-            if role.name.startswith("Ruleta Rusa") and int(role.name.split(" ")[-1]) == level + 1:
+            if role.name.startswith("Ruleta Rusa") and int(role.name[-1]) == level + 1:
                 next_level = role
                 break
         if next_level != 0:
             await self.rroulette.players[0].add_roles(next_level)
             print_debug(f"{self.rroulette.players[0]} ha subido de nivel")
         else:
-            new_role = await interaction.guild.create_role(name=f"Ruleta Rusa N{level + 1}", color=discord.Colour.yellow(
+            new_role = await interaction.guild.create_role(name=f"Ruleta Rusa - N{level + 1}", color=discord.Colour.yellow(
             ), permissions=discord.Permissions(permissions=2150878272), mentionable=True, reason=f'Siguiente Nivel de la Ruleta Rusa')
             await self.rroulette.players[0].add_roles(new_role)
 
