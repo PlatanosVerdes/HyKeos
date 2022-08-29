@@ -633,6 +633,13 @@ async def reformatory(ctx, member: discord.Member):
             f"{ctx.author.name} ha usado /reformatory pero no existe el canal {name_channel}")
         return
 
+    if member.voice == None:
+        await ctx.respond(f'{member.mention} no esta en un canal de voz', ephemeral=True)
+        print_debug(
+            f"{ctx.author.name} ha usado /reformatory pero {member.name} no esta en un canal de voz")
+        return
+
+    current_channel = member.voice.channel
     await member.move_to(channel_reformatory)
 
     # Añadir a la cola de reformatorio
@@ -643,7 +650,6 @@ async def reformatory(ctx, member: discord.Member):
                           description=f'{member.mention} se ha portado mal. \n\n Tiempo de reformación: `{jail_time}` segundos 🕐')
     message = await ctx.respond(embed=embed)
 
-    current_channel = ctx.author.voice.channel
     reformatory_cells.append([member, current_channel, jail_time, message])
     print_debug(
         f"{ctx.author.name} ha usado /reformatory y ha añadido a {member.name} a la cola de reformatorio")
@@ -977,8 +983,8 @@ async def delete_roulette_channels(ctx):
 @bot.slash_command(description='Vamos a jugar a la ruleta rusa 👤🔫')
 @option("mode", description="Elige el tipo de modo",  autocomplete=discord.utils.basic_autocomplete(["Easy", "Hard"]))
 async def russian_roulette(ctx, mode: str):
-    # await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
-    # return
+    await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
+    return
     if mode not in ("Easy", "Hard"):
         await ctx.respond('El modo debe ser Easy o Hard', ephemeral=True)
         return
@@ -1108,23 +1114,24 @@ async def check_ref_queue():
         ref_channel = discord.utils.get(
             bot.get_all_channels(), name='⛓ Reformatorio ⛓')
 
-        if prisoner[0].voice.channel == ref_channel:
-            return
+        if prisoner[0].voice.channel != ref_channel:
 
-        await prisoner[0].move_to(discord.utils.get(bot.get_all_channels(), name='⛓ Reformatorio ⛓'))
-        jail_time = randrange(MIN_TIME_REFORMATORY, MAX_TIME_REFORMATORY)
-        prisoner[2] += jail_time
-        print_debug(
-            f"{prisoner[0].name} se ha movido a otro canal y se le ha sumado {jail_time} segundos a su condena. Ahora estará durante {prisoner[2]} segundos")
+            await prisoner[0].move_to(discord.utils.get(bot.get_all_channels(), name='⛓ Reformatorio ⛓'))
+            jail_time = randrange(MIN_TIME_REFORMATORY, MAX_TIME_REFORMATORY)
+            prisoner[2] += jail_time
+            print_debug(
+                f"{prisoner[0].name} se ha movido a otro canal y se le ha sumado {jail_time} segundos a su condena. Ahora estará durante {prisoner[2]} segundos")
 
-        embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
-                              description=f'{ prisoner[0].mention} se ha portado mal. \n\n Edit: Se ha movido de canal `+{jail_time}`\nTiempo de reformación: `{prisoner[2]}` segundos 🕐')
-        await prisoner[3].edit_original_message(embed=embed)
+            embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
+                                  description=f'{ prisoner[0].mention} se ha portado mal. \n\n Edit: Se ha movido de canal `+{jail_time}`\nTiempo de reformación: `{prisoner[2]}` segundos 🕐')
+            await prisoner[3].edit_original_message(embed=embed)
+
+            prisoner[2] -= REFORMATORY_CHECK_TIME
+            embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
+                                  description=f'{ prisoner[0].mention} se ha portado mal. \n\nTiempo de reformación: `{prisoner[2]}` segundos 🕐')
+            await prisoner[3].edit_original_message(embed=embed)
 
         prisoner[2] -= REFORMATORY_CHECK_TIME
-        embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
-                              description=f'{ prisoner[0].mention} se ha portado mal. \n\nTiempo de reformación: `{prisoner[2]}` segundos 🕐')
-        await prisoner[3].edit_original_message(embed=embed)
 
         if prisoner[2] <= 0:
             print_debug(
@@ -1134,7 +1141,12 @@ async def check_ref_queue():
             embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
                                   description=f'{ prisoner[0].mention} se ha portado mal. \n\n Edit: Tiempo acabado ‼')
             await prisoner[3].edit_original_message(embed=embed, delete_after=5.0)
-    print_debug(f'{ref_channel.name} has {len(reformatory_cells)} prisoners')
+            print_debug(
+                f'{ref_channel.name} has {len(reformatory_cells)} prisoners')
+        else:
+            embed = discord.Embed(color=discord.Colour.purple(), title=f'{ref_channel.name}\n',
+                                  description=f'{ prisoner[0].mention} se ha portado mal. \n\n Tiempo de reformación: `{prisoner[2]}` segundos 🕐')
+            await prisoner[3].edit_original_message(embed=embed)
 
 
 # -------------------------------
