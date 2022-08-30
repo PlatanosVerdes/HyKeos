@@ -65,7 +65,7 @@ class RRoulette:
     revolvers = [["Nagant M1895", 7], ["Swiss Mini Gun C1ST", 6],
                  ["Remington Model 1887", 6], ["Magnum", 5], ["LeMat", 9]]
 
-    def __init__(self, id_rr, countdown, voice_channel, players=[], new_voice_channel=None, original_message=None, mode="Easy", readys=0):
+    def __init__(self, id_rr, countdown, voice_channel, players=[], new_voice_channel=None, original_message=None, mode="Easy"):
         super().__init__()
         self.id = id_rr
         self.players = players
@@ -75,7 +75,6 @@ class RRoulette:
         self.revolver = choice(self.revolvers)
         self.original_message = original_message
         self.mode = mode
-        self.readys = readys
 
     def get_drum(self):
         bullet = randint(0, self.revolver[1]-1)
@@ -175,6 +174,7 @@ class RRouletteView(discord.ui.View):
 
             button.disabled = True
             await interaction.response.edit_message(embed=original_embed, view=self)
+            self.rroulette.players.clear()
             return
 
         # Edit original message with the result and disable button
@@ -217,7 +217,8 @@ class RRouletteView(discord.ui.View):
     async def add_role(self, interaction, mode):
         # Catch the level of player
         level = 0
-        roles_user = self.rroulette.players[0].roles # Get the roles of the last player
+        # Get the roles of the last player
+        roles_user = self.rroulette.players[0].roles
         for role in roles_user:
             if role.name.startswith(f"Ruleta Rusa {mode}"):
                 if level < int(role.name[-1]):
@@ -226,25 +227,27 @@ class RRouletteView(discord.ui.View):
         print_debug(f"El ganador tiene Nivel: {level}")
         roles = interaction.guild.roles
 
-        #Check the next level exist
+        # Check the next level exist
         next_level = 0
         for role in roles:
             if role.name.startswith(f"Ruleta Rusa {mode}") and int(role.name[-1]) == level + 1:
                 next_level = role
                 break
-                
+
         if next_level != 0:
             print_debug(f"El siguiente nivel es: {next_level}")
             await self.rroulette.players[0].add_roles(next_level)
             print_debug(
                 f"{self.rroulette.players[0]} ha subido de nivel - Modo: {mode}")
         else:
-            print_debug(f"No hay nivel siguiente - se crea el siguiente nivel: {level + 1}")
+            print_debug(
+                f"No hay nivel siguiente - se crea el siguiente nivel: {level + 1}")
             if mode == "Easy":
                 color = discord.Color.yellow()
             else:
                 color = discord.Color.red()
-            new_role = await interaction.guild.create_role(name=f"Ruleta Rusa {mode} - N{level + 1}", color=color, permissions=discord.Permissions(permissions=2150878272), mentionable=True, reason=f'Siguiente Nivel de la Ruleta Rusa {mode}')
+            new_role = await interaction.guild.create_role(name=f"Ruleta Rusa {mode} - N{level + 1}",
+                                                           color=color, permissions=discord.Permissions(permissions=2150878272), mentionable=True, reason=f'Siguiente Nivel de la Ruleta Rusa {mode}')
             await self.rroulette.players[0].add_roles(new_role)
 
 
@@ -1000,10 +1003,10 @@ async def delete_roulette_channels(ctx):
 @bot.slash_command(description='Vamos a jugar a la ruleta rusa 👤🔫')
 @option("mode", description="Elige el tipo de modo",  autocomplete=discord.utils.basic_autocomplete(["Easy", "Hard"]))
 async def russian_roulette(ctx, mode: str):
-    await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
-    return
+    # await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
+    # return
 
-    #FIXME: HAY QUE INSTANCIAR UN NUEVO OBJETO DE ROULETTE PARA CADA VIEW. Si no se quedan "restros"
+    # FIXME: HAY QUE INSTANCIAR UN NUEVO OBJETO DE ROULETTE PARA CADA VIEW. Si no se quedan "restros"
     if mode not in ("Easy", "Hard"):
         await ctx.respond('El modo debe ser Easy o Hard', ephemeral=True)
         return
