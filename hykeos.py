@@ -1003,10 +1003,6 @@ async def delete_roulette_channels(ctx):
 @bot.slash_command(description='Vamos a jugar a la ruleta rusa 👤🔫')
 @option("mode", description="Elige el tipo de modo",  autocomplete=discord.utils.basic_autocomplete(["Easy", "Hard"]))
 async def russian_roulette(ctx, mode: str):
-    # await ctx.respond('Actualmente esta en mantenimiento :( ...', ephemeral=True)
-    # return
-
-    # FIXME: HAY QUE INSTANCIAR UN NUEVO OBJETO DE ROULETTE PARA CADA VIEW. Si no se quedan "restros"
     if mode not in ("Easy", "Hard"):
         await ctx.respond('El modo debe ser Easy o Hard', ephemeral=True)
         return
@@ -1047,7 +1043,6 @@ async def start_russian_roulettes():
         return
 
     for rroulette in countdown_roulette:
-        print_debug(f"De la {rroulette.id} estan {rroulette.players}")
         if rroulette.countdown < datetime.now():
             if len(rroulette.players) < 2:
                 print_debug(
