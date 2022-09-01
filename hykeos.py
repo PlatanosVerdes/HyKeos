@@ -1593,16 +1593,19 @@ async def on_message(message):
     # Food Rating
     await set_food_rating(message, FOOD_CHANNEL_ID)
 
-#Add cogs
+
+# Add cogs
 cogfiles = [
-    f"cogs.{filename[:-3]}" for filename in os.listdir("cogs") if filename.endswith(".py")
+    f"cogs.{filename[:-3]}"
+    for filename in os.listdir("./cogs")
+    if filename.endswith(".py")
 ]
 
 for cogfile in cogfiles:
     try:
         bot.load_extension(cogfile)
-    except Exception as e:
-        print_debug(f"{cogfile} cannot be loaded. [{e}]")
+    except Exception as err:
+        print(err)
 
 
 bot.run(TOKEN)
