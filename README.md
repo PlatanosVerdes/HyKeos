@@ -11,9 +11,7 @@ Bot designed for my server `Guiris`. But maybe some of the methods and commands 
 `python -m venv .venv`
 
 # Library
-`pip install py-cord`
-
-`pip install py-cord==2.0.1`
+`pip install py-cord` or `pip install py-cord==2.0.1`
 
 ## PyCord Documentacion
 https://docs.pycord.dev/en/master/index.html
