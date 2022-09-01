@@ -1,6 +1,7 @@
 # HyKeos
 This is a HyKeos:
 ![Hykeos](assets/image/icon.jpg)
+
 *I took the image from a site that did not put the author, if anyone knows who it is do not hesitate to tell me.*
 
 Bot designed for my server `Guiris`. But maybe some of the methods and commands will be useful for you to learn.
