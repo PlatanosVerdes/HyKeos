@@ -1,7 +1,6 @@
 # HyKeos
-This is a HyKeos: <img src="assets/image/icon.jpg" width="3%" height="3%"> (*I took the image from a site that did not put the author, if anyone knows who it is do not hesitate to tell me.*)
-
 Bot designed for my server `Guiris`. But maybe some of the methods and commands will be useful for you to learn.
+This is a HyKeos: <img src="assets/image/icon.jpg" width="5%" height="5%"> (*I took the image from a site that did not put the author, if anyone knows who it is do not hesitate to tell me.*)
 
 # Dependencies
 ## Virtual environment
