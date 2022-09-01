@@ -1595,7 +1595,7 @@ async def on_message(message):
 
 #Add cogs
 cogfiles = [
-    f"cogs.{filename}" for filename in os.listdir("./cogs") if filename.endswith(".py")
+    f"cogs.{filename[:-3]}" for filename in os.listdir("cogs") if filename.endswith(".py")
 ]
 
 for cogfile in cogfiles:
