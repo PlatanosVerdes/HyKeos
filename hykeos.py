@@ -1481,7 +1481,7 @@ async def check_votes():
             print_debug(f"Vote {vote.propuesta[:35]} has ended")
 
 
-@tasks.loop(hours=2)
+@tasks.loop(hours=24)
 async def check_temporal_roles():
     if not len(roles_temp):
         return
