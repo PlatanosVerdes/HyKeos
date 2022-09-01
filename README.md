@@ -1,8 +1,10 @@
 # HyKeos
-Bot designed for my server `Guiris`. But maybe some of the methods and commands will be useful for you to learn.
+Bot designed for my server. But maybe some of the methods and commands will be useful for you to learn.
 This is a HyKeos: <img src="assets/image/icon.jpg" width="5%" height="5%"> (*I took the image from a site that did not put the author, if anyone knows who it is do not hesitate to tell me.*)
 
 # Dependencies
+Install dependencies with `pip install -r requirements.txt`
+
 ## Virtual environment
 `python -m venv .venv`
 
