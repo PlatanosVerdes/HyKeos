@@ -25,7 +25,6 @@ COUNTDOWN_RROULETTE = 15
 # DEBUG stuff
 DEBUG = True
 
-
 def print_debug(message):
     if DEBUG:
         print(f"[{str(datetime.now()).split(' ')[1]} - DEBUG] {message}")
@@ -1482,7 +1481,7 @@ async def check_votes():
             print_debug(f"Vote {vote.propuesta[:35]} has ended")
 
 
-@tasks.loop(hours=1)
+@tasks.loop(days=1)
 async def check_temporal_roles():
     if not len(roles_temp):
         return
