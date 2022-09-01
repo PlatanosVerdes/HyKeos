@@ -31,9 +31,20 @@ def print_debug(message):
         print(f"[{str(datetime.now()).split(' ')[1]} - DEBUG] {message}")
     return
 
+# Local variables
+if os.path.exists(os.getcwd() + "/config.json"):
+    with open(os.getcwd() + "/config.json", "r") as f:
+        config = json.load(f)
+    TOKEN = config["TOKEN"]
+    ID_GUIRIS = config["ID_GUIRIS"]
+else:
+    # Create config.json
+    with open(os.getcwd() + "/config.json", "w+") as f:
+        json.dump({"TOKEN": "", "ID_GUIRIS": ""}, f)
 
-TOKEN = "OTQzODI0NDg0NTEzNzUxMDYy.Yg4rDA.p60NNYyoKLvPZrXovh6yy5EIE-g"
-ID_GUIRIS = 718460119993548800  # ID del server de 'guiris'
+    # Si no existe el archivo de configuración, se utilizaran las variables de entorno -> Heroku
+    TOKEN = os.getenv("TOKEN")
+    ID_GUIRIS = os.getenv("ID_GUIRIS")  # ID del server de 'guiris'
 
 intents = discord.Intents.default()
 intents.message_content = True
