@@ -546,7 +546,7 @@ class PlsRoleView(discord.ui.View):
     @discord.ui.button(label="Aceptar", row=0, style=discord.ButtonStyle.success)
     async def first_button_callback(self, _, interaction):
 
-        await interaction.user.add_roles(self.role)
+        await self.user.add_roles(self.role)
         await interaction.channel.send(
             f"{interaction.user.mention} ha aceptado a {self.user.mention}, ahora es {self.role.mention} 🎉"
         )
@@ -563,7 +563,7 @@ class PlsRoleView(discord.ui.View):
             title="Solicitud: Aceptada ✅",
             description=f"\nRol: `{self.role.name.upper()}`\nMotivo: `{self.reason}`\n\n{fecha}",
         )
-        await interaction.user.send(embed=embed)
+        await self.user.send(embed=embed)
         print_debug(f"{interaction.user.name} ha aceptado a {self.user.name}")
 
     @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
