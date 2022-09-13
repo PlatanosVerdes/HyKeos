@@ -922,6 +922,32 @@ async def pls_rol(ctx, rol: discord.Role, reason: str):
     )
 
 
+@bot.slash_command(description="Quitate un rol ❌🙋🏻‍♂️")
+@option("rol", description="Rol que deseas eliminarte")
+async def delete_rol(ctx, rol: discord.Role):
+    roles = ctx.guild.roles
+    if rol not in roles:
+        await ctx.respond(
+            f"No se ha encontrado el rol `{rol.name}`...😔", ephemeral=True
+        )
+        print_debug(
+            f"{ctx.author.name} ha usado /pls_rol pero no existe el rol {rol.name}"
+        )
+        return
+
+    if not rol in ctx.author.roles:
+        await ctx.respond(f"No tienes el rol {rol.mention}", ephemeral=True)
+        print_debug(
+            f"{ctx.author.name} ha usado /pls_rol pero no tiene el rol {rol.name}"
+        )
+        return
+
+    await ctx.author.remove_roles(rol)
+
+    await ctx.respond(f"{rol.mention} eliminado correctamente ✅", ephemeral=True)
+    print_debug(f"{ctx.author.name} ha usado /delete_rol {rol.name}")
+    
+
 @bot.slash_command(description="Abre una votación 📩 con ✅ y ❌")
 @option("type_time", description="Tipo de duración", autocomplete=get_type_times)
 @option(
