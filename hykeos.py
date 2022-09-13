@@ -152,7 +152,7 @@ class FoodPlayer:
 
 class RRouletteView(discord.ui.View):
     def __init__(self, rroulette, drum=[], drum_order=[], drum_index=0):
-        super().__init__()
+        super().__init__(timeout=None)
         self.rroulette = rroulette
         self.drum = drum
         self.drum_order = drum_order
@@ -319,7 +319,7 @@ class RRouletteView(discord.ui.View):
 
 class PrepareRRouletteView(discord.ui.View):
     def __init__(self, potential_players, rroulette_id):
-        super().__init__()
+        super().__init__(timeout=None)
         self.potential_players = potential_players
         self.rroulette_id = rroulette_id
 
@@ -380,7 +380,7 @@ class VoteView(discord.ui.View):
         emoji_2="❌",
         message_id=None,
     ):
-        super().__init__()
+        super().__init__(timeout=None)
         self.ctx = ctx
         message_id = message_id
         self.propuesta = propuesta
@@ -534,7 +534,7 @@ class VoteView(discord.ui.View):
 
 class PlsRoleView(discord.ui.View):
     def __init__(self, user, role, reason, roles):
-        super().__init__()
+        super().__init__(timeout=None)
         self.user = user
         self.role = role
         self.reason = reason
