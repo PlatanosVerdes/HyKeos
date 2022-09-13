@@ -25,10 +25,12 @@ COUNTDOWN_RROULETTE = 15
 # DEBUG stuff
 DEBUG = True
 
+
 def print_debug(message):
     if DEBUG:
         print(f"[{str(datetime.now()).split(' ')[1]} - DEBUG] {message}")
     return
+
 
 # Local variables
 if os.path.exists(os.getcwd() + "/config.json"):
@@ -911,6 +913,32 @@ async def pls_rol(ctx, rol: discord.Role, reason: str):
     )
 
 
+@bot.slash_command(description="Quitate un rol ❌🙋🏻‍♂️")
+@option("rol", description="Rol que deseas eliminarte")
+async def delete_rol(ctx, rol: discord.Role):
+    roles = ctx.guild.roles
+    if rol not in roles:
+        await ctx.respond(
+            f"No se ha encontrado el rol `{rol.name}`...😔", ephemeral=True
+        )
+        print_debug(
+            f"{ctx.author.name} ha usado /pls_rol pero no existe el rol {rol.name}"
+        )
+        return
+
+    if not rol in ctx.author.roles:
+        await ctx.respond(f"No tienes el rol {rol.mention}", ephemeral=True)
+        print_debug(
+            f"{ctx.author.name} ha usado /pls_rol pero no tiene el rol {rol.name}"
+        )
+        return
+
+    await ctx.author.remove_roles(rol)
+
+    await ctx.respond(f"{rol.mention} eliminado correctamente ✅", ephemeral=True)
+    print_debug(f"{ctx.author.name} ha usado /delete_rol {rol.name}")
+
+
 @bot.slash_command(description="Abre una votación 📩 con ✅ y ❌")
 @option("type_time", description="Tipo de duración", autocomplete=get_type_times)
 @option(
@@ -1374,25 +1402,23 @@ async def russian_roulette(ctx, mode: str):
 
 
 @bot.slash_command(description="Añade una pelicula a la lista de peliculas 🎞")
-@option(
-    "Pelicula",
-    description="Escribe el nombre de la pelicula"
-)
+@option("Pelicula", description="Escribe el nombre de la pelicula")
 async def add_movie(ctx, title: str):
     if title == "":
         await ctx.respond("Debes escribir el nombre de la pelicula", ephemeral=True)
         return
-    
-    #Añadir pelicula al json de peliculas
-    with open('movies.json') as f:
+
+    # Añadir pelicula al json de peliculas
+    with open("movies.json") as f:
         movies = json.load(f)
-    #data = {"ID": len(movies), "Title": title, "Adder": ctx.author.name,"Date": datetime.now().strftime("%y%f%d%W%S")}
-    #movies[0].append(data)
-    #with open('movies.json', 'w') as f:
+    # data = {"ID": len(movies), "Title": title, "Adder": ctx.author.name,"Date": datetime.now().strftime("%y%f%d%W%S")}
+    # movies[0].append(data)
+    # with open('movies.json', 'w') as f:
     #    json.dump(movies, f, ensure_ascii=False,)
     await ctx.respond(f"Pelicula añadida a la lista de peliculas")
-    print_debug(f"{ctx.author.name} ha usado /add_movie y ha añadido la pelicula {title}")
-
+    print_debug(
+        f"{ctx.author.name} ha usado /add_movie y ha añadido la pelicula {title}"
+    )
 
 
 # -------------------------------
