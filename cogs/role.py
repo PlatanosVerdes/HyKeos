@@ -131,7 +131,7 @@ class Roles(commands.Cog):
 
     @slash_command(description="Quitate un rol ❌🙋🏻‍♂️")
     @option("rol", description="Rol que deseas eliminarte")
-    async def delete_rol(ctx, rol: discord.Role):
+    async def delete_rol(self, ctx, rol: discord.Role):
         roles = ctx.guild.roles
         if rol not in roles:
             await ctx.respond(

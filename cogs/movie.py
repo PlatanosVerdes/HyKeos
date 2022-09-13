@@ -10,7 +10,7 @@ class Movies(commands.Cog):
 
     @slash_command(description="Añade una pelicula a la lista de peliculas 🎞")
     @option("Pelicula", description="Escribe el nombre de la pelicula")
-    async def add_movie(ctx, title: str):
+    async def add_movie(self, ctx, title: str):
         if title == "":
             await ctx.respond("Debes escribir el nombre de la pelicula", ephemeral=True)
             return
@@ -26,8 +26,6 @@ class Movies(commands.Cog):
         print_debug(
             f"{ctx.author.name} ha usado /add_movie y ha añadido la pelicula {title}"
         )
-
-
 
 
 def setup(bot):

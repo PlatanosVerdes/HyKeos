@@ -26,9 +26,10 @@ intents.members = True
 
 bot = commands.Bot(debug_guilds=[ID_GUIRIS], intents=intents)
 
+
 @bot.event
 async def on_ready():
-    print("Bot is Ready, lets go!")    
+    print("Bot is Ready, lets go!")
 
 
 # Add cogs
@@ -44,7 +45,7 @@ for cogfile in cogfiles:
     try:
         bot.load_extension(cogfile)
     except Exception as err:
-        print(err) 
+        print(err)
 print_debug("Cogs loaded")
 
 
