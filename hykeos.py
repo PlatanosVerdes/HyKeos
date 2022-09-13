@@ -154,7 +154,7 @@ class FoodPlayer:
 
 class RRouletteView(discord.ui.View):
     def __init__(self, rroulette, drum=[], drum_order=[], drum_index=0):
-        super().__init__()
+        super().__init__(timeout=None)
         self.rroulette = rroulette
         self.drum = drum
         self.drum_order = drum_order
@@ -321,7 +321,7 @@ class RRouletteView(discord.ui.View):
 
 class PrepareRRouletteView(discord.ui.View):
     def __init__(self, potential_players, rroulette_id):
-        super().__init__()
+        super().__init__(timeout=None)
         self.potential_players = potential_players
         self.rroulette_id = rroulette_id
 
@@ -382,7 +382,7 @@ class VoteView(discord.ui.View):
         emoji_2="❌",
         message_id=None,
     ):
-        super().__init__()
+        super().__init__(timeout=None)
         self.ctx = ctx
         message_id = message_id
         self.propuesta = propuesta
@@ -536,7 +536,7 @@ class VoteView(discord.ui.View):
 
 class PlsRoleView(discord.ui.View):
     def __init__(self, user, role, reason, roles):
-        super().__init__()
+        super().__init__(timeout=None)
         self.user = user
         self.role = role
         self.reason = reason
@@ -545,12 +545,18 @@ class PlsRoleView(discord.ui.View):
 
     @discord.ui.button(label="Aceptar", row=0, style=discord.ButtonStyle.success)
     async def first_button_callback(self, _, interaction):
-
+        print_debug(f"Acepted")
         await self.user.add_roles(self.role)
-        await interaction.channel.send(
+        print_debug(f"se ha añadido el rol {self.role.name} a {self.user.name}")
+
+        await interaction.response.send_message(
             f"{interaction.user.mention} ha aceptado a {self.user.mention}, ahora es {self.role.mention} 🎉"
         )
+        print_debug(f"se ha enviado un mensaje por el canal {interaction.channel.name}")
+
         await interaction.message.delete()
+        print_debug(f"se ha eliminado el mensaje {interaction.message.id}")
+
         fecha = (
             "Inicio: `"
             + self.date.strftime("%m/%d/%Y %H:%M:%S")
@@ -563,13 +569,16 @@ class PlsRoleView(discord.ui.View):
             title="Solicitud: Aceptada ✅",
             description=f"\nRol: `{self.role.name.upper()}`\nMotivo: `{self.reason}`\n\n{fecha}",
         )
+
         await self.user.send(embed=embed)
+        print_debug(f"se ha enviado un mensaje privado a {self.user.name}")
+
         print_debug(f"{interaction.user.name} ha aceptado a {self.user.name}")
 
     @discord.ui.button(label="Rechazar", row=0, style=discord.ButtonStyle.danger)
     async def second_button_callback(self, _, interaction):
 
-        await interaction.channel.send(
+        await interaction.response.send_message(
             f"{interaction.user.mention} ha denegado a {self.user.mention} a ser {self.role.mention} 💀"
         )
         await interaction.message.delete()
@@ -1601,11 +1610,14 @@ cogfiles = [
     if filename.endswith(".py")
 ]
 
-for cogfile in cogfiles:
-    try:
-        bot.load_extension(cogfile)
-    except Exception as err:
-        print(err)
+#print_debug(f"Loading cogs: {cogfiles}")
+#for cogfile in cogfiles:
+#    bot.load_extension(cogfile)
+#    try:
+#        bot.load_extension(cogfile)
+#    except Exception as err:
+#        print(err) 
+#print_debug("Cogs loaded")
 
 
 bot.run(TOKEN)

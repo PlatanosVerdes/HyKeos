@@ -1,7 +1,7 @@
 import discord
-from discord.commands import commands
+from discord.ext import commands
 
-class Greetings(discord.Cog): # create a class for our cog that inherits from commands.Cog
+class Greetings(commands.Cog): # create a class for our cog that inherits from commands.Cog
     # this class is used to create a cog, which is a module that can be added to the bot
 
     def __init__(self, bot): # this is a special method that is called when the cog is loaded
@@ -11,11 +11,11 @@ class Greetings(discord.Cog): # create a class for our cog that inherits from co
     async def hello(self, ctx): # all methods now must have both self and ctx parameters
         await ctx.send('Hello!')
 
-    @discord.slash_command() # we can also add application commands
+    @commands.slash_command() # we can also add application commands
     async def goodbye(self, ctx):
         await ctx.respond('Goodbye!')
 
-    @discord.user_command()
+    @commands.user_command()
     async def greet(self, ctx, member: discord.Member):
         await ctx.respond(f'{ctx.author.mention} says hello to {member.mention}!')
 
