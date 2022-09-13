@@ -280,7 +280,7 @@ class RussianRoulete(commands.Cog):
         description="Elige el tipo de modo",
         autocomplete=discord.utils.basic_autocomplete(["Easy", "Hard"]),
     )
-    async def russian_roulette(ctx, mode: str):
+    async def russian_roulette(self, ctx, mode: str):
         if mode not in ("Easy", "Hard"):
             await ctx.respond("El modo debe ser Easy o Hard", ephemeral=True)
             return
