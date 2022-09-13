@@ -24,8 +24,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(debug_guilds=[ID_GUIRIS], intents=intents)
-
 
 @bot.event
 async def on_ready():
