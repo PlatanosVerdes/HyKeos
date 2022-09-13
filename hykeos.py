@@ -594,7 +594,7 @@ class PlsRoleView(discord.ui.View):
             title="Solicitud: Denegada ❌",
             description=f"\nRol: `{self.role.name.upper()}`\nMotivo: `{self.reason}`\n\n{fecha}",
         )
-        await interaction.user.send(embed=embed)
+        await self.user.send(embed=embed)
         print_debug(
             f"{interaction.user.name} ha denegado a {self.user.name} a ser {self.role.name}"
         )
