@@ -28,7 +28,7 @@ bot = commands.Bot(debug_guilds=[ID_GUIRIS], intents=intents)
 
 @bot.event
 async def on_ready():
-    print("Bot is Ready, lets go!")    
+    print("Bot is Ready, lets go!")
 
 
 # Add cogs
