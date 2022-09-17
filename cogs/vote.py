@@ -367,7 +367,6 @@ class Votes(commands.Cog):
                 roles_temp.append(
                     [vote.role_1, vote.role_2, datetime.today() + timedelta(days=1)]
                 )  # Deletion of the temporary role
-
                 print_debug(f"Vote {vote.propuesta[:35]} has ended")
 
     @tasks.loop(hours=TEMP_ROLES_CHECK_TIME)
