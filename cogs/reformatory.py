@@ -66,7 +66,7 @@ class Reformatory(commands.Cog):
         )
         message = await ctx.respond(embed=embed)
     
-        reformatory_cells.append([member, current_channel, jail_time, message])
+        reformatory_cells.append([member, current_channel, jail_time, message, jail_time])
         print_debug(
             f"{ctx.author.name} ha usado /reformatory y ha añadido a {member.name} a la cola de reformatorio"
         )
@@ -122,9 +122,19 @@ class Reformatory(commands.Cog):
                 embed = discord.Embed(
                     color=discord.Colour.purple(),
                     title=f"{ref_channel.name}\n",
-                    description=f"{ prisoner[0].mention} se ha portado mal. \n\n Edit: Tiempo acabado ‼",
+                    description=f"Miembro reformado\n",
                 )
-                await prisoner[3].edit_original_message(embed=embed, delete_after=5.0)
+                embed.add_field(
+                    name="Miembro reformado",
+                    value=f"{prisoner[0].mention}",
+                    inline=False,
+                )
+                embed.add_field(
+                    name="Tiempo de reformación",
+                    value=f"`{prisoner[4]}` segundos 🕐",
+                    inline=False,
+                )
+                await prisoner[3].edit_original_message(embed=embed)
                 print_debug(f"{ref_channel.name} has {len(reformatory_cells)} prisoners")
             else:
                 embed = discord.Embed(

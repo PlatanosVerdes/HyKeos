@@ -141,8 +141,6 @@ class Food(commands.Cog):
             if message.reactions == []:
                 continue  # No reacciones
 
-            print_debug("Reaccion")
-
             players[members.index(message.author)].n_foods += 1
 
             for reaction in message.reactions:
@@ -360,14 +358,28 @@ class Food(commands.Cog):
         # If message dont have reactions
         if message.reactions == []:
             await ctx.respond(
-                "El último mensaje no tiene reacciones de estrellas", ephemeral=True
+                "No se han encontrado reacciones en el mensaje",
+                ephemeral=True,
             )
             return
 
         await message.clear_reactions()
-        await ctx.respond(
-            f"Reacciones eliminadas del mensaje {message.jump_url} de {message.author.mention} ✨"
+        embed = discord.Embed(
+            color=Colour.purple(),
+            title="Reacciones de eliminadas",
+            description=f"Las reacciones de valoracion han sido eliminadas",
         )
+        embed.add_field(
+            name="Mensaje eliminado",
+            value=f"{message.jump_url}",
+            inline=False,
+        )
+        embed.add_field(
+            name="Autor del mensaje eliminado",
+            value=f"{message.author.mention}",
+            inline=False,
+        )
+        await ctx.respond(embed=embed)
         print_debug(
             f"{ctx.author.name} ha usado /delete_ratings y ha eliminado las reacciones de {message.author.name}"
         )
