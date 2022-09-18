@@ -1,6 +1,11 @@
+import discord
 from discord.ext import commands
-from discord.commands import slash_command
+from discord.commands import slash_command, option
 from debug import print_debug
+from random import randint
+
+MIN_SIZE_DICK = 0
+MAX_SIZE_DICK = 25
 
 
 class Misc(commands.Cog):
@@ -27,6 +32,11 @@ class Misc(commands.Cog):
     #        act = discord.Streaming(name=name, url="https://twitch.tv/")
     #
     #    await self.bot.change_presence(activity=act, status=discord.Status.online)
+
+    @slash_command(description="Cuanto mide tu pinga?")
+    @option("member", description="A quien quieres medirle la pinga?")
+    async def dick(self, ctx, member: discord.Member): 
+        await ctx.respond(f"{member.mention} has a 8{'='*randint(MIN_SIZE_DICK,MAX_SIZE_DICK)}D")
 
 
 def setup(bot):
