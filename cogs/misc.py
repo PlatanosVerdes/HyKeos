@@ -49,10 +49,9 @@ class Misc(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
-        print_debug(f"{message.author.name} ha enviado un mensaje {message.content}")
         if message.channel.id != ID_TEMP_CHANNEL:
             return
-        message.delete(delelete_after=TEMP_DELAY)
+        await message.delete(delelete_after=TEMP_DELAY)
         print_debug(f"Mensaje de temp borrado: {message.content}")
 
 def setup(bot):
