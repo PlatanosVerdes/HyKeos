@@ -45,6 +45,27 @@ class Misc(commands.Cog):
         )
         print_debug(f"{ctx.author.name} ha usado \dick")
 
+    @slash_command(description="Mensajes a limpiar")
+    @option("number", description="Número de mensajes a limpiar")
+    async def clear(self, ctx, number: int):
+        if number > 100:
+            await ctx.respond("No puedes borrar mas de 100 mensajes", ephemeral=True)
+            print_debug(f"{ctx.author.name} no ha podido usar /clear")
+            return
+        if number < 0:
+            await ctx.respond("No puedes borrar menos de 0 mensajes subnormal", ephemeral=True)
+            print_debug(f"{ctx.author.name} no ha podido usar /clear")
+            return
+        if number == 0:
+            await ctx.respond("No puedes borrar 0 mensajes", ephemeral=True)
+            print_debug(f"{ctx.author.name} no ha podido usar /clear")
+            return
+
+        await ctx.defer()
+        await ctx.channel.purge(limit=number)
+        await ctx.send(f"`Se han borrado {number} mensajes 🧼`",delete_after=1.5)
+        print_debug(f"{ctx.author.name} ha usado /clear")
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
