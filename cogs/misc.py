@@ -8,8 +8,8 @@ from datetime import datetime
 MIN_SIZE_DICK = 0
 MAX_SIZE_DICK = 25
 
-ID_TEMP_CHANNEL = "1030927721682960505"
-TEMP_DELAY = 60.0  # Seconds
+ID_TEMP_CHANNEL = 1030927721682960505
+TEMP_DELAY = 120.0  # Seconds
 
 
 class Misc(commands.Cog):
@@ -50,9 +50,8 @@ class Misc(commands.Cog):
         if message.author.bot:
             return
         if message.channel.id != ID_TEMP_CHANNEL:
-            return
-        await message.delete(delelete_after=TEMP_DELAY)
-        print_debug(f"Mensaje de temp borrado: {message.content}")
+            return    
+        await message.delete(delay=TEMP_DELAY)
 
 def setup(bot):
     bot.add_cog(Misc(bot))
