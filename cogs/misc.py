@@ -1,11 +1,15 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.commands import slash_command, option
 from debug import print_debug
 from random import randint
+from datetime import datetime
 
 MIN_SIZE_DICK = 0
 MAX_SIZE_DICK = 25
+
+ID_TEMP_CHANNEL = "1030927721682960505"
+TEMP_DELAY = 60.0  # Seconds
 
 
 class Misc(commands.Cog):
@@ -35,9 +39,18 @@ class Misc(commands.Cog):
 
     @slash_command(description="Cuanto mide tu pinga?")
     @option("member", description="A quien quieres medirle la pinga?")
-    async def dick(self, ctx, member: discord.Member): 
-        await ctx.respond(f"{member.mention} has a 8{'='*randint(MIN_SIZE_DICK,MAX_SIZE_DICK)}D")
+    async def dick(self, ctx, member: discord.Member):
+        await ctx.respond(
+            f"{member.mention} has a 8{'='*randint(MIN_SIZE_DICK,MAX_SIZE_DICK)}D"
+        )
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+        if message.channel.id != ID_TEMP_CHANNEL:
+            return
+        message.delete(delelete_after=TEMP_DELAY)
 
 def setup(bot):
     bot.add_cog(Misc(bot))
