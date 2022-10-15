@@ -43,6 +43,7 @@ class Misc(commands.Cog):
         await ctx.respond(
             f"{member.mention} has a 8{'='*randint(MIN_SIZE_DICK,MAX_SIZE_DICK)}D"
         )
+        print_debug(f"{ctx.author.name} ha usado \dick")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -51,6 +52,7 @@ class Misc(commands.Cog):
         if message.channel.id != ID_TEMP_CHANNEL:
             return
         message.delete(delelete_after=TEMP_DELAY)
+        print_debug(f"Mensaje de temp borrado: {message.content}")
 
 def setup(bot):
     bot.add_cog(Misc(bot))
