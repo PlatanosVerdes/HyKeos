@@ -41,7 +41,7 @@ cogfiles = [
 
 print_debug(f"Loading cogs: {cogfiles}")
 for cogfile in cogfiles:
-    bot.load_extension(cogfile)
+    #bot.load_extension(cogfile)
     try:
         bot.load_extension(cogfile)
     except Exception as err:
