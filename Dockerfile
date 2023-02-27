@@ -1,9 +1,7 @@
-FROM python:3.10-slim
+FROM arm32v7/python:3.10-slim
 
-WORKDIR /usr/src/app
-
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 COPY . .
 
