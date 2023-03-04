@@ -294,7 +294,7 @@ class Food(commands.Cog):
             embed.add_field(name="Puntos", value=f"{player.get_points()}", inline=True)
             embed.add_field(name="Comidas", value=player.n_foods, inline=True)
             embed.add_field(
-                name="Media:", value=f"{player.get_mean_points()}", inline=True
+                name="Media", value=f"{player.get_mean_points()}", inline=True
             )
             embed.add_field(name=f"{one_stars}", value=player.one_stars, inline=True)
             embed.add_field(name=f"{two_stars}", value=player.two_stars, inline=True)
