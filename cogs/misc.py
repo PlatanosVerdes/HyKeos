@@ -109,6 +109,9 @@ class Misc(commands.Cog):
             return
 
         for channel in photo_finish_channels:
+            if before.channel is None:
+                return
+            
             if before.channel == channel["voice_channel"]:
                 embed = discord.Embed(
                         color=discord.Colour.purple(),
