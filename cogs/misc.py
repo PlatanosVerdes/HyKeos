@@ -3,12 +3,13 @@ from discord.ext import commands, tasks
 from discord.commands import slash_command, option
 from debug import print_debug
 from random import randint
-from datetime import datetime
+from datetime import datetime, timedelta
 
 MIN_SIZE_DICK = 0
 MAX_SIZE_DICK = 25
 
 ID_TEMP_CHANNEL = 1030927721682960505
+ID_GENERAL_CHANNEL = 718460119993548804
 TEMP_DELAY = 120.0  # Seconds
 
 photo_finish_channels = []
@@ -38,7 +39,7 @@ class Misc(commands.Cog):
     #        act = discord.Streaming(name=name, url="https://twitch.tv/")
     #
     #    await self.bot.change_presence(activity=act, status=discord.Status.online)
-
+    
     @slash_command(description="Cuanto mide tu pinga?")
     @option("member", description="A quien quieres medirle la pinga?")
     async def dick(self, ctx, member: discord.Member):
@@ -46,10 +47,10 @@ class Misc(commands.Cog):
             f"{member.mention} has a 8{'='*randint(MIN_SIZE_DICK,MAX_SIZE_DICK)}D"
         )
         print_debug(f"{ctx.author.name} ha usado \dick")
-
+    
     @slash_command(description="Quien será el último en irse?")
     async def photo_finish(self, ctx):
-
+        
         voice = ctx.author.voice
         if voice is None:
             await ctx.respond(
@@ -62,19 +63,30 @@ class Misc(commands.Cog):
                 "Debes estar en un canal de voz con al menos 2 personas para usar este comando.", ephemeral=True
             )
             return
+        
+        if voice.channel in [channel['voice_channel'] for channel in photo_finish_channels]:
+            await ctx.respond(
+                "Ya hay una photo finish activada en este canal de voz 😏", ephemeral=True
+            )
+            return
 
         photo_finish_channels.append(
             {
                 "voice_channel": voice.channel,
                 "members": voice.channel.members,
                 "author": ctx.author,
+                "channel_id": ctx.channel.id,
+                "start_time": datetime.now(),
+                
             }
         )
         await ctx.respond("Photo finish activada!", ephemeral=True)
-
+    
     @slash_command(description="Mensajes a limpiar")
     @option("number", description="Número de mensajes a limpiar")
     async def clear(self, ctx, number: int):
+        """Clear messages from a channel"""
+
         if number > 100:
             await ctx.respond("No puedes borrar mas de 100 mensajes", ephemeral=True)
             print_debug(f"{ctx.author.name} no ha podido usar /clear")
@@ -103,38 +115,45 @@ class Misc(commands.Cog):
             return
         await message.delete(delay=TEMP_DELAY)
 
+    
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
+    async def on_voice_state_update(self, member, before, after):   
         if not photo_finish_channels:
             return
-
-        for channel in photo_finish_channels:
-            if before.channel is None:
-                return
+        
+        if before.channel == after.channel:
+            return
+        
+        for i, channel in enumerate(photo_finish_channels):
             
+            # Add member to "game"
+            if after.channel == channel['voice_channel']:
+                if member not in channel['members']:
+                    photo_finish_channels[i]['members'].append(member)
+
+            # Remove member from "game"
             if before.channel == channel["voice_channel"]:
+                
                 embed = discord.Embed(
                         color=discord.Colour.purple(),
                         title="Photo Finish 📸",
+                        description="El último en irse será el perdedor!"
                     )
                 
                 if not len(before.channel.members):
-                    dm_channel = member.dm_channel or await member.create_dm()
-                    
-                    embed.add_field(name='Canal de voz', value=before.channel.mention, inline=False)
-                    embed.add_field(name='Posición', value="Último 🤡", inline=False)
-                    embed.add_field(name='Autor', value=channel['author'].mention, inline=False)
-
+                    position = "Último 🤡"
                     photo_finish_channels.remove(channel)
                 else:
-                    
-                    embed.add_field(name='Canal de voz', value=before.channel.mention, inline=False)
-                    embed.add_field(name='Posición', value=len(channel['members']) - len(before.channel.members), inline=False)
-                    embed.add_field(name='Autor', value=channel['author'].mention, inline=False)
+                    position = len(channel["members"]) - len(before.channel.members)
 
-                dm_channel = member.dm_channel or await member.create_dm()
-                await dm_channel.send(embed=embed)
-
+                embed.add_field(name='Miembro', value=member.mention, inline=True)
+                embed.add_field(name='Posición', value=position, inline=True)
+                embed.add_field(name='Time', value=timedelta(seconds=(datetime.now() - channel['start_time']).total_seconds()), inline=True)
+                embed.set_footer(text=f"Created: {channel['start_time'].strftime('%d/%m/%Y %H:%M:%S')}\nBy: {channel['author'].name} - {before.channel.name}")
+                embed.set_thumbnail(url=member.display_avatar.url)
+                
+                channel = await member.guild.fetch_channel(channel['channel_id'])
+                await channel.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Misc(bot))
