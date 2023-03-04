@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 from discord.commands import slash_command, option
 from debug import print_debug
 from random import randint
-from datetime import datetime
+from datetime import datetime, timedelta
 
 MIN_SIZE_DICK = 0
 MAX_SIZE_DICK = 25
@@ -146,13 +146,12 @@ class Misc(commands.Cog):
                 else:
                     position = len(channel["members"]) - len(before.channel.members)
 
-                #Embed fields filling
                 embed.add_field(name='Miembro', value=member.mention, inline=True)
                 embed.add_field(name='Posición', value=position, inline=True)
-                print(member.guild.me)
+                embed.add_field(name='Time', value=timedelta(seconds=(datetime.now() - channel['start_time']).total_seconds()), inline=True)
                 embed.set_footer(text=f"Created: {channel['start_time'].strftime('%d/%m/%Y %H:%M:%S')}\nBy: {channel['author'].name} - {before.channel.name}")
                 embed.set_thumbnail(url=member.display_avatar.url)
-                #Channel to send the results to
+                
                 channel = await member.guild.fetch_channel(channel['channel_id'])
                 await channel.send(embed=embed)
 
