@@ -56,11 +56,17 @@ class Misc(commands.Cog):
                 "Debes estar en un canal de voz para usar este comando.", ephemeral=True
             )
             return
+        
+        if voice.channel.members < 2:
+            await ctx.respond(
+                "Debes estar en un canal de voz con al menos 2 personas para usar este comando.", ephemeral=True
+            )
+            return
 
         photo_finish_channels.append(
             {
                 "voice_channel": voice.channel,
-                "members": ctx.author.voice.channel.members,
+                "members": voice.channel.members,
                 "author": ctx.author,
             }
         )
