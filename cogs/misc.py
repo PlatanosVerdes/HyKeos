@@ -57,7 +57,7 @@ class Misc(commands.Cog):
             )
             return
         
-        if voice.channel.members < 2:
+        if len(voice.channel.members) < 2:
             await ctx.respond(
                 "Debes estar en un canal de voz con al menos 2 personas para usar este comando.", ephemeral=True
             )
@@ -109,6 +109,9 @@ class Misc(commands.Cog):
             return
 
         for channel in photo_finish_channels:
+            if before.channel is None:
+                return
+            
             if before.channel == channel["voice_channel"]:
                 embed = discord.Embed(
                         color=discord.Colour.purple(),
@@ -126,7 +129,7 @@ class Misc(commands.Cog):
                 else:
                     
                     embed.add_field(name='Canal de voz', value=before.channel.mention, inline=False)
-                    embed.add_field(name='Posición', value=channel['members'] - len(before.channel.members), inline=False)
+                    embed.add_field(name='Posición', value=len(channel['members']) - len(before.channel.members), inline=False)
                     embed.add_field(name='Autor', value=channel['author'].mention, inline=False)
 
                 dm_channel = member.dm_channel or await member.create_dm()
