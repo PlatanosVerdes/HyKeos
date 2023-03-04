@@ -68,6 +68,7 @@ class Misc(commands.Cog):
                 "voice_channel": voice.channel,
                 "members": voice.channel.members,
                 "author": ctx.author,
+                "start_time": datetime.now(),
             }
         )
         await ctx.respond("Photo finish activada!", ephemeral=True)
@@ -121,16 +122,18 @@ class Misc(commands.Cog):
                 if not len(before.channel.members):
                     dm_channel = member.dm_channel or await member.create_dm()
                     
-                    embed.add_field(name='Canal de voz', value=before.channel.mention, inline=False)
-                    embed.add_field(name='Posición', value="Último 🤡", inline=False)
+                    embed.add_field(name='Posición', value="Último 🤡", inline=True)
+                    embed.add_field(name='Canal de voz', value=before.channel.mention, inline=True)
                     embed.add_field(name='Autor', value=channel['author'].mention, inline=False)
+                    embed.add_field(name='Fecha', value=f"{channel['start_time'].strftime('%d/%m/%Y %H:%M:%S')}", inline=True)
 
                     photo_finish_channels.remove(channel)
                 else:
-                    
-                    embed.add_field(name='Canal de voz', value=before.channel.mention, inline=False)
-                    embed.add_field(name='Posición', value=len(channel['members']) - len(before.channel.members), inline=False)
+                                        
+                    embed.add_field(name='Posición', value=len(channel['members']) - len(before.channel.members), inline=True)
+                    embed.add_field(name='Canal de voz', value=before.channel.mention, inline=True)
                     embed.add_field(name='Autor', value=channel['author'].mention, inline=False)
+                    embed.add_field(name='Fecha', value=f"{channel['start_time'].strftime('%d/%m/%Y %H:%M:%S')}", inline=True)
 
                 dm_channel = member.dm_channel or await member.create_dm()
                 await dm_channel.send(embed=embed)
