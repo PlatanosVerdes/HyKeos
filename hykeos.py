@@ -14,7 +14,7 @@ if os.path.exists(os.getcwd() + "/config.json"):
 else:
     # Create config.json
     with open(os.getcwd() + "/config.json", "w+") as f:
-        json.dump({"TOKEN": "", "ID_GUIRIS": ""}, f)
+        json.dump({"TOKEN": "", "ID_GUIRIS": "", "PASSWORD": ""}, f)
 
     # Si no existe el archivo de configuración, se utilizaran las variables de entorno -> Heroku
     TOKEN = os.getenv("TOKEN")

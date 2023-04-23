@@ -1,3 +1,4 @@
+import json
 import sys
 import discord
 import os
@@ -15,6 +16,12 @@ MAX_SIZE_DICK = 25
 ID_TEMP_CHANNEL = 1030927721682960505
 ID_GENERAL_CHANNEL = 718460119993548804
 TEMP_DELAY = 120.0  # Seconds
+
+# Read the password in config.json
+if os.path.exists(os.getcwd() + "/config.json"):
+    with open(os.getcwd() + "/config.json", "r") as f:
+        config = json.load(f)
+    PASSWORD = config["PASSWORD"]
 
 photo_finish_channels = []
 
@@ -126,14 +133,25 @@ class Misc(commands.Cog):
     # My IP address
     @slash_command(description="Muestra la IP del servidor")
     @commands.has_permissions(administrator=True)
-    async def ip(self, ctx):
-        # Control if the bot is in a server
-        if ctx.guild is None:
-            await ctx.respond("This command only works in servers", ephemeral=True)
+    async def ip(self, ctx, password):
+        if password != PASSWORD:
+            await ctx.respond("Wrong password! 🎃", ephemeral=True)
             return
+        
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
             await ctx.respond(f"IP: {s.getsockname()[0]}")
+
+    # Command in shell
+    @slash_command(description="Run a command in shell")
+    @commands.has_permissions(administrator=True)
+    async def command(self, ctx, *, command, password):
+        if password != PASSWORD:
+            await ctx.respond("Wrong password! 🎃", ephemeral=True)
+            return
+
+        # Output in menssage
+        await ctx.respond(f"```{os.popen(command).read()}```")
 
     @commands.Cog.listener()
     async def on_message(self, message):
