@@ -9,7 +9,7 @@ from debug import print_debug
 from pydub import AudioSegment
 
 PATH_AUDIO = "assets/sounds"
-SOUND_CHECK_TIME = 5  # 300
+SOUND_CHECK_TIME = 300
 CHANNEL_BACKUP_FILES_IS = 1099749409912266883
 
 connections = {}
