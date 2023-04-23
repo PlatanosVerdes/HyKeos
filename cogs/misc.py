@@ -40,17 +40,6 @@ class Misc(commands.Cog):
         await ctx.respond(f"Hi {ctx.author.mention}, I'm {self.bot.user.name}!")
         print_debug(f"{ctx.author.name} ha usado /hello")
 
-    # @slash_command(description="Cambiar la actividad del bot.")
-    # async def set_activity(
-    #    self, ctx, typ: Option(str, choices=["game", "stream"]), name: Option(str)
-    # ):
-    #    if typ == "game":
-    #        act = discord.Game(name=name)
-    #    elif type == "stream":
-    #        act = discord.Streaming(name=name, url="https://twitch.tv/")
-    #
-    #    await self.bot.change_presence(activity=act, status=discord.Status.online)
-
     @slash_command(description="Cuanto mide tu pinga?")
     @option("member", description="A quien quieres medirle la pinga?")
     async def dick(self, ctx, member: discord.Member):
@@ -140,7 +129,7 @@ class Misc(commands.Cog):
         
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))
-            await ctx.respond(f"IP: {s.getsockname()[0]}")
+            await ctx.respond(f"IP: {s.getsockname()[0]}", ephemeral=True)
 
     # Command in shell
     @slash_command(description="Run a command in shell")
