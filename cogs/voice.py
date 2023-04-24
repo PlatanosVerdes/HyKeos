@@ -7,8 +7,10 @@ from datetime import datetime
 from enum import Enum
 from debug import print_debug
 from pydub import AudioSegment
+from gtts import gTTS
 
 PATH_AUDIO = "assets/sounds"
+PATH_AUDIO_TEMP = "assets/sounds/temp"
 SOUND_CHECK_TIME = 300
 CHANNEL_BACKUP_FILES_IS = 1099749409912266883
 
@@ -30,9 +32,58 @@ def get_audio_duration(filepath):
     return audio.duration_seconds
 
 
+def delete_temps():
+    for file in os.listdir(PATH_AUDIO_TEMP):
+        os.remove(f"{PATH_AUDIO_TEMP}/{file}")
+
+
+def create_audio_by_text(text):
+    tts = gTTS(text=text, lang="es", slow=False, tld="com")
+    name = f"{PATH_AUDIO_TEMP}/temp_{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
+    tts.save(name)
+    return name
+
+
 class Voice(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    # Speak a text
+    @slash_command(description="Speak a text")
+    @option(name="text", description="The text to speak", required=True)
+    async def speak(self, ctx, text):
+        if ctx.author.voice is None:
+            await ctx.respond("You are not in a voice channel!", ephemeral=True)
+            return
+
+        # Check if the bot is already connected to a voice channel
+        if ctx.voice_client is not None:
+            if ctx.voice_client.channel != ctx.author.voice.channel:
+                await ctx.voice_client.move_to(ctx.author.voice.channel)
+            vc = ctx.voice_client
+        else:
+            vc = await ctx.author.voice.channel.connect()
+
+        path_audio = create_audio_by_text(text)
+        audio_source = discord.FFmpegPCMAudio(path_audio)
+
+        # Check if the bot is already playing something
+        if vc.is_playing():
+            vc.stop()
+            del connections[vc]
+
+        vc.play(
+            audio_source, after=lambda e: print(f"Player error: {e}") if e else None
+        )
+
+        # Save the connection
+        connections[vc] = {
+            "voice_channel": ctx.channel,
+            "time": get_audio_duration(path_audio),
+            "start_time": datetime.now(),
+        }
+
+        await ctx.respond(f"Speaking *{text}*!", ephemeral=True)
 
     # Command to play a sound
     @slash_command(
@@ -199,6 +250,7 @@ class Voice(commands.Cog):
     @tasks.loop(seconds=SOUND_CHECK_TIME)
     async def check_sounds(self):
         if not connections:
+            delete_temps()
             return
 
         for guild in self.bot.guilds:
