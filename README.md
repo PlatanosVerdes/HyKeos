@@ -14,6 +14,51 @@ Install dependencies with `pip install -r requirements.txt`
 https://docs.pycord.dev/en/master/index.html
 https://guide.pycord.dev/introduction
 
+
+# Installation & config in Docker
+The next steps are to configure the bot with a docker, and set it up as a service.
+
+1. **Build the Docker Image**: Navigate to the directory containing the Dockerfile for Hykeos and run the following command to build the Docker image:
+
+`docker build -t hykeos .`
+
+2. **Create a systemd Service**: Create a new systemd service file for Hykeos to ensure it starts automatically on boot.
+
+`sudo nano /etc/systemd/system/hykeos.service`
+
+Add the following content to the file:
+```
+[Unit]
+Description=Hykeos Bot Docker Container
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start -a hykeos
+ExecStop=/usr/bin/docker stop -t 2 hykeos
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. **Enable and Start the Service**: Enable the Hykeos service to start automatically on boot and start the service.
+
+`sudo systemctl enable hykeos.service`
+
+## Usage
+- To manually start the Hykeos service, use:
+
+`sudo systemctl start hykeos.service`
+
+- To manually stop the Hykeos service, use:
+
+`sudo systemctl stop hykeos.service`
+
+- To check the status of the Hykeos service, use:
+
+`sudo systemctl status hykeos.service`
+
 # Features
 ## Commands
 ### Done ✅
