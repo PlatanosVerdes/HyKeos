@@ -1,6 +1,26 @@
 # HyKeos <img src="assets/image/icon.jpg" width="5%" height="5%">
 Bot designed for my server. But maybe some of the methods and commands will be useful for you to learn. *I took the image from a site that did not put the author, if anyone knows who it is do not hesitate to tell me.*
 
+# Requirements
+To get started, you'll need to configure Hykeos with your bot token and server ID. You have two options for setting these values: using a config.json file or setting them as environment variables.
+
+## Using Environment Variables
+```
+TOKEN=<YOUR_TOKEN>
+ID_GUIRIS=<SERVER_ID>
+```
+
+## Using config.json
+Create a config.json file in the root directory of your project and add your bot token and server ID as shown below:
+
+```json
+{
+   "TOKEN": "<YOUR_TOKEN>",
+   "ID_GUIRIS": "<SERVER_ID>"
+}
+```
+Replace <YOUR_TOKEN> with your bot's token and <SERVER_ID> with your server's ID.
+
 # Dependencies
 Install dependencies with `pip install -r requirements.txt`
 
