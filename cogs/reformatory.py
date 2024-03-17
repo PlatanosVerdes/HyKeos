@@ -14,13 +14,14 @@ REFORMATORY_CHECK_TIME = 2
 MIN_TIME_REFORMATORY = 10
 MAX_TIME_REFORMATORY = 60
 
+
 # CLASS
 class Reformatory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @slash_command(
-    description="Al reformatorio! ⛓. Debe de existir el canal con el nombre: ⛓ Reformatorio ⛓"
+        description="Al reformatorio! ⛓. Debe de existir el canal con el nombre: ⛓ Reformatorio ⛓"
     )
     @option("member", description="Quien se ha portado mal? 🤔")
     async def reformatory(self, ctx, member: discord.Member):
@@ -29,20 +30,26 @@ class Reformatory(commands.Cog):
             (ctx.author.guild_permissions.administrator)
             or ("Staff Reformatory" in [role.name for role in ctx.author.roles])
         ):
-            await ctx.respond(f"{ctx.author.mention} No tienes permisos para hacer eso! 🤔")
-            print_debug(f"{ctx.author.name} ha usado /reformatory pero no tiene permisos")
+            await ctx.respond(
+                f"{ctx.author.mention} No tienes permisos para hacer eso! 🤔"
+            )
+            print_debug(
+                f"{ctx.author.name} ha usado /reformatory pero no tiene permisos"
+            )
             return
-    
+
         name_channel = NAME_OF_CHANNEL
-        channel_reformatory = discord.utils.get(ctx.guild.voice_channels, name=name_channel)
-    
+        channel_reformatory = discord.utils.get(
+            ctx.guild.voice_channels, name=name_channel
+        )
+
         if channel_reformatory is None:
             await ctx.respond(f"No existe el canal {name_channel}", ephemeral=True)
             print_debug(
                 f"{ctx.author.name} ha usado /reformatory pero no existe el canal {name_channel}"
             )
             return
-    
+
         if member.voice is None:
             await ctx.respond(
                 f"{member.mention} no esta en un canal de voz", ephemeral=True
@@ -51,26 +58,27 @@ class Reformatory(commands.Cog):
                 f"{ctx.author.name} ha usado /reformatory pero {member.name} no esta en un canal de voz"
             )
             return
-    
+
         current_channel = member.voice.channel
         await member.move_to(channel_reformatory)
-    
+
         # Añadir a la cola de reformatorio
         # user, current_channel, time
         jail_time = randrange(MIN_TIME_REFORMATORY, MAX_TIME_REFORMATORY)
-    
+
         embed = discord.Embed(
             color=discord.Colour.purple(),
             title=f"{name_channel}\n",
             description=f"{member.mention} se ha portado mal. \n\n Tiempo de reformación: `{jail_time}` segundos 🕐",
         )
         message = await ctx.respond(embed=embed)
-    
-        reformatory_cells.append([member, current_channel, jail_time, message, jail_time])
+
+        reformatory_cells.append(
+            [member, current_channel, jail_time, message, jail_time]
+        )
         print_debug(
             f"{ctx.author.name} ha usado /reformatory y ha añadido a {member.name} a la cola de reformatorio"
         )
-    
 
     @tasks.loop(seconds=REFORMATORY_CHECK_TIME)
     async def check_ref_queue(self):
@@ -85,7 +93,9 @@ class Reformatory(commands.Cog):
             if prisoner[0].voice is None:
                 return
 
-            ref_channel = discord.utils.get(self.bot.get_all_channels(), name=NAME_OF_CHANNEL)
+            ref_channel = discord.utils.get(
+                self.bot.get_all_channels(), name=NAME_OF_CHANNEL
+            )
 
             if prisoner[0].voice.channel != ref_channel:
 
@@ -135,7 +145,9 @@ class Reformatory(commands.Cog):
                     inline=False,
                 )
                 await prisoner[3].edit_original_message(embed=embed)
-                print_debug(f"{ref_channel.name} has {len(reformatory_cells)} prisoners")
+                print_debug(
+                    f"{ref_channel.name} has {len(reformatory_cells)} prisoners"
+                )
             else:
                 embed = discord.Embed(
                     color=discord.Colour.purple(),
@@ -143,11 +155,12 @@ class Reformatory(commands.Cog):
                     description=f"{ prisoner[0].mention} se ha portado mal. \n\n Tiempo de reformación: `{prisoner[2]}` segundos 🕐",
                 )
                 await prisoner[3].edit_original_message(embed=embed)
-    
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.check_ref_queue.start()
         print_debug("Initialize reformatory task loop")
+
 
 def setup(bot):
     bot.add_cog(Reformatory(bot))
