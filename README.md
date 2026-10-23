@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.svg" width="96" alt="">
+  <img src="assets/image/icon.jpg" width="96" alt="">
 </p>
 
 <h1 align="center">HyKeos</h1>
@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/discord-bot-5865f2?logo=discord&logoColor=white" alt="Discord bot">
 </p>
 
-Bot designed for my server. But maybe some of the methods and commands will be useful for you to learn.
+Bot designed for my server. But maybe some of the methods and commands will be useful for you to learn. *I took the image from a site that did not put the author, if anyone knows who it is do not hesitate to tell me.*
 
 ## Requirements
 
